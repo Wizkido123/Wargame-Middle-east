@@ -1,0 +1,1 @@
+There is fair amount of geopolitical uncertainty and extreme levels of economic and political happenings of interest to many. There is a likelihood or certainty of this leading to a military conflict concerning many countries and will be an interesting scenario to be played out as per your imagination.So try this wargaming model. Input your knowledge and see the results.
