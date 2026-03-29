@@ -1,0 +1,2535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CENTCOM WARGAME — OPERATION IRON MERIDIAN</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;600;700;900&display=swap');
+
+:root {
+  --bg-primary: #030810;
+  --bg-secondary: #060e1a;
+  --bg-panel: #080f1e;
+  --bg-card: #0a1525;
+  --bg-hover: #0e1d30;
+  --border-primary: #1a3a5c;
+  --border-accent: #0d7aa8;
+  --border-glow: #00c8ff;
+  --text-primary: #c8dff0;
+  --text-secondary: #6e9ab8;
+  --text-muted: #3a5a78;
+  --text-bright: #e8f4ff;
+  --accent-blue: #00a8d4;
+  --accent-cyan: #00e5ff;
+  --accent-green: #00ff88;
+  --accent-amber: #ffaa00;
+  --accent-red: #ff3355;
+  --accent-orange: #ff6600;
+  --us-color: #0088ff;
+  --iran-color: #cc3300;
+  --neutral: #888;
+  --grid-line: rgba(0,168,212,0.06);
+  --scanline: rgba(0,200,255,0.03);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  cursor: crosshair;
+}
+
+/* SCANLINE OVERLAY */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, var(--scanline) 2px, var(--scanline) 4px);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* GRID BACKGROUND */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ══════════════ HEADER ══════════════ */
+#header {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 52px;
+  background: linear-gradient(180deg, #050d1a 0%, #030810 100%);
+  border-bottom: 1px solid var(--border-primary);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px;
+  z-index: 100;
+}
+
+.header-left { display: flex; align-items: center; gap: 16px; }
+.header-emblem {
+  width: 36px; height: 36px;
+  border: 1px solid var(--accent-blue);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px; font-weight: 900;
+  color: var(--accent-cyan);
+  box-shadow: 0 0 12px rgba(0,200,255,0.3), inset 0 0 8px rgba(0,200,255,0.1);
+  animation: emblem-pulse 3s ease-in-out infinite;
+}
+@keyframes emblem-pulse {
+  0%,100% { box-shadow: 0 0 12px rgba(0,200,255,0.3), inset 0 0 8px rgba(0,200,255,0.1); }
+  50% { box-shadow: 0 0 20px rgba(0,200,255,0.6), inset 0 0 12px rgba(0,200,255,0.2); }
+}
+
+.header-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px; font-weight: 700;
+  color: var(--text-bright);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+.header-subtitle {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--accent-amber);
+  letter-spacing: 2px;
+}
+
+.header-center {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 24px;
+}
+.nav-tab {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px; font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.nav-tab:hover { color: var(--accent-cyan); border-color: var(--border-accent); }
+.nav-tab.active {
+  color: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+  background: rgba(0,200,255,0.08);
+}
+.nav-tab.active::after {
+  content: '';
+  position: absolute; bottom: -1px; left: 0; right: 0;
+  height: 1px;
+  background: var(--accent-cyan);
+  box-shadow: 0 0 6px var(--accent-cyan);
+}
+
+.header-right { display: flex; align-items: center; gap: 12px; }
+.status-indicator {
+  display: flex; align-items: center; gap: 6px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+}
+.status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent-green);
+  box-shadow: 0 0 6px var(--accent-green);
+  animation: blink 1.5s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.clock {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--accent-amber);
+  letter-spacing: 2px;
+}
+
+/* ══════════════ LAYOUT ══════════════ */
+#app {
+  position: fixed;
+  top: 52px; bottom: 0; left: 0; right: 0;
+  display: grid;
+  grid-template-columns: 260px 1fr 280px;
+  grid-template-rows: 1fr;
+  z-index: 1;
+}
+
+/* ══════════════ LEFT PANEL ══════════════ */
+#left-panel {
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-primary);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-primary);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.panel-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px; font-weight: 600;
+  color: var(--accent-blue);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+.panel-badge {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  color: var(--accent-amber);
+  background: rgba(255,170,0,0.1);
+  border: 1px solid rgba(255,170,0,0.3);
+  padding: 2px 6px;
+}
+
+.panel-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px;
+}
+.panel-scroll::-webkit-scrollbar { width: 3px; }
+.panel-scroll::-webkit-scrollbar-track { background: transparent; }
+.panel-scroll::-webkit-scrollbar-thumb { background: var(--border-accent); }
+
+/* SIDE SELECTORS */
+.side-selector {
+  display: flex; gap: 4px;
+  padding: 8px;
+  border-bottom: 1px solid var(--border-primary);
+}
+.side-btn {
+  flex: 1;
+  padding: 6px;
+  text-align: center;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px; font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+.side-btn.us { color: var(--us-color); border-color: rgba(0,136,255,0.3); }
+.side-btn.us.active, .side-btn.us:hover { background: rgba(0,136,255,0.15); border-color: var(--us-color); }
+.side-btn.iran { color: var(--iran-color); border-color: rgba(204,51,0,0.3); }
+.side-btn.iran.active, .side-btn.iran:hover { background: rgba(204,51,0,0.15); border-color: var(--iran-color); }
+
+/* FORCE CARDS */
+.force-domain {
+  margin-bottom: 8px;
+}
+.domain-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 8px;
+  background: rgba(0,168,212,0.06);
+  border-left: 2px solid var(--border-accent);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px; font-weight: 700;
+  color: var(--accent-blue);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.domain-header:hover { background: rgba(0,168,212,0.12); }
+.domain-content { padding: 4px 0; }
+
+.unit-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px;
+  padding: 4px 8px;
+  align-items: center;
+  border-bottom: 1px solid rgba(26,58,92,0.4);
+  transition: background 0.15s;
+}
+.unit-row:hover { background: var(--bg-hover); }
+.unit-name {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: 'Share Tech Mono', monospace;
+}
+.unit-strength {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--accent-amber);
+}
+
+/* READINESS BAR */
+.readiness-bar {
+  height: 2px;
+  background: rgba(255,255,255,0.1);
+  margin-top: 2px;
+  position: relative;
+}
+.readiness-fill {
+  height: 100%;
+  transition: width 0.5s ease;
+}
+.readiness-high { background: var(--accent-green); }
+.readiness-med { background: var(--accent-amber); }
+.readiness-low { background: var(--accent-red); }
+
+.mini-stats {
+  display: flex; gap: 4px; margin-top: 2px;
+}
+.mini-stat {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  color: var(--text-muted);
+}
+.mini-stat span { color: var(--text-secondary); }
+
+/* ══════════════ CENTER ══════════════ */
+#center-panel {
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* TAB VIEWS */
+.tab-view { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+.tab-view.active { display: flex; }
+
+/* ══════════════ MAP VIEW ══════════════ */
+#map-container {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #020b14;
+}
+
+#theater-map {
+  width: 100%; height: 100%;
+  position: relative;
+}
+
+/* SVG MAP */
+#map-svg {
+  width: 100%; height: 100%;
+  position: absolute; inset: 0;
+}
+
+/* FORCE OVERLAYS ON MAP */
+.force-marker {
+  position: absolute;
+  display: flex; align-items: center; gap: 6px;
+  cursor: pointer;
+}
+.force-icon {
+  width: 28px; height: 28px;
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+  font-family: 'Rajdhani', sans-serif;
+  position: relative;
+}
+.force-icon.us-force {
+  background: rgba(0,100,200,0.8);
+  border: 1px solid var(--us-color);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(0,136,255,0.5);
+}
+.force-icon.iran-force {
+  background: rgba(140,30,0,0.8);
+  border: 1px solid var(--iran-color);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(204,51,0,0.5);
+}
+.force-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  color: var(--text-primary);
+  background: rgba(3,8,16,0.85);
+  padding: 2px 5px;
+  border: 1px solid var(--border-primary);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Pulse rings on map markers */
+.force-icon::before {
+  content: '';
+  position: absolute;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  opacity: 0;
+  animation: ring-pulse 2s ease-out infinite;
+}
+@keyframes ring-pulse {
+  0% { width: 28px; height: 28px; opacity: 0.6; }
+  100% { width: 60px; height: 60px; opacity: 0; }
+}
+
+/* MAP CONTROLS */
+.map-controls {
+  position: absolute; top: 12px; right: 12px;
+  display: flex; flex-direction: column; gap: 4px;
+  z-index: 10;
+}
+.map-ctrl-btn {
+  width: 28px; height: 28px;
+  background: rgba(6,14,26,0.9);
+  border: 1px solid var(--border-primary);
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+}
+.map-ctrl-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+
+/* LAYER TOGGLES */
+.layer-panel {
+  position: absolute; bottom: 12px; left: 12px;
+  background: rgba(6,14,26,0.92);
+  border: 1px solid var(--border-primary);
+  padding: 8px;
+  z-index: 10;
+}
+.layer-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px; letter-spacing: 2px;
+  color: var(--accent-blue);
+  margin-bottom: 6px;
+}
+.layer-toggle {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: 'Rajdhani', sans-serif;
+}
+.toggle-switch {
+  width: 24px; height: 12px;
+  border: 1px solid var(--border-accent);
+  border-radius: 6px;
+  position: relative;
+  transition: background 0.2s;
+}
+.toggle-switch.on { background: rgba(0,200,255,0.3); border-color: var(--accent-cyan); }
+.toggle-knob {
+  position: absolute;
+  width: 8px; height: 8px; border-radius: 50%;
+  top: 1px; left: 1px;
+  background: var(--text-muted);
+  transition: all 0.2s;
+}
+.toggle-switch.on .toggle-knob { left: 13px; background: var(--accent-cyan); }
+
+/* COMBAT STATUS BAR */
+.combat-status-bar {
+  height: 40px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-primary);
+  display: flex; align-items: center;
+  padding: 0 12px; gap: 20px;
+}
+.status-metric {
+  display: flex; align-items: center; gap: 8px;
+}
+.status-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px; letter-spacing: 1px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.status-value {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px; font-weight: 600;
+}
+.status-value.blue { color: var(--us-color); }
+.status-value.red { color: var(--iran-color); }
+.status-value.amber { color: var(--accent-amber); }
+.status-value.green { color: var(--accent-green); }
+
+/* ══════════════ ANALYTICS VIEW ══════════════ */
+#analytics-view {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto auto;
+  gap: 12px;
+  align-content: start;
+}
+
+.chart-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  padding: 12px;
+}
+.chart-card.full-width { grid-column: 1/-1; }
+.chart-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px; font-weight: 600;
+  color: var(--accent-blue);
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.chart-area {
+  position: relative;
+  height: 140px;
+}
+.chart-area canvas { width: 100% !important; height: 100% !important; }
+
+/* PROBABILITY GAUGE */
+.probability-display {
+  display: flex; gap: 16px; margin-top: 8px;
+}
+.prob-side {
+  flex: 1;
+  text-align: center;
+}
+.prob-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+.prob-value {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 28px; font-weight: 900;
+}
+.prob-bar-container {
+  height: 6px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+.prob-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1s ease;
+}
+
+/* ══════════════ WARGAME ENGINE VIEW ══════════════ */
+#wargame-view {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-content: start;
+}
+
+.scenario-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  padding: 12px;
+}
+.scenario-card.full-width { grid-column: 1/-1; }
+
+.form-group {
+  margin-bottom: 10px;
+}
+.form-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 4px;
+}
+.form-input, .form-select {
+  width: 100%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  padding: 6px 8px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  outline: none;
+  transition: border-color 0.2s;
+  appearance: none;
+}
+.form-input:focus, .form-select:focus { border-color: var(--accent-cyan); }
+.form-select option { background: var(--bg-secondary); }
+
+.multi-domain-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 8px;
+}
+.domain-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 11px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+}
+.domain-toggle:hover { border-color: var(--border-accent); }
+.domain-toggle.enabled { border-color: var(--accent-cyan); color: var(--accent-cyan); background: rgba(0,200,255,0.06); }
+
+.run-btn {
+  width: 100%;
+  padding: 10px;
+  background: rgba(0,168,212,0.15);
+  border: 1px solid var(--accent-blue);
+  color: var(--accent-cyan);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px; font-weight: 700;
+  letter-spacing: 3px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.2s;
+  margin-top: 8px;
+}
+.run-btn:hover {
+  background: rgba(0,168,212,0.3);
+  box-shadow: 0 0 16px rgba(0,168,212,0.4);
+}
+.run-btn:active { transform: scale(0.99); }
+
+/* SIM PROGRESS */
+.sim-progress {
+  margin-top: 8px;
+}
+.sim-phase {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 0;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+.phase-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  border: 1px solid var(--text-muted);
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+.phase-dot.complete { background: var(--accent-green); border-color: var(--accent-green); box-shadow: 0 0 6px var(--accent-green); }
+.phase-dot.active { background: var(--accent-amber); border-color: var(--accent-amber); animation: blink 0.8s ease-in-out infinite; }
+
+/* SCENARIO RESULTS */
+.result-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(26,58,92,0.3);
+  font-size: 12px;
+}
+.result-label { color: var(--text-muted); font-family: 'Share Tech Mono', monospace; font-size: 10px; }
+.result-value { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 14px; }
+
+/* ══════════════ COA VIEW ══════════════ */
+#coa-view {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.coa-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.coa-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  padding: 14px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.coa-card:hover {
+  border-color: var(--accent-cyan);
+  background: var(--bg-hover);
+}
+.coa-card.selected {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 20px rgba(0,200,255,0.15);
+}
+.coa-type {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.coa-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 16px; font-weight: 700;
+  color: var(--text-bright);
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+.coa-desc {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+.coa-metrics {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 4px; margin-bottom: 8px;
+}
+.coa-metric {
+  display: flex; flex-direction: column;
+  padding: 4px 6px;
+  background: var(--bg-secondary);
+  border-left: 2px solid;
+}
+.coa-metric-label { font-family: 'Share Tech Mono', monospace; font-size: 8px; color: var(--text-muted); }
+.coa-metric-value { font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 700; }
+
+.coa-risk-bar { height: 4px; background: rgba(255,255,255,0.1); margin-bottom: 4px; }
+.coa-risk-fill { height: 100%; transition: width 0.8s ease; }
+
+.phase-list {
+  list-style: none;
+  margin-top: 8px;
+}
+.phase-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(26,58,92,0.3);
+  font-size: 11px;
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--text-secondary);
+}
+.phase-num {
+  width: 16px; height: 16px;
+  border: 1px solid var(--border-accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px;
+  color: var(--accent-blue);
+  flex-shrink: 0;
+}
+
+/* ══════════════ LOGISTICS VIEW ══════════════ */
+#logistics-view {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  align-content: start;
+}
+.logistics-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  padding: 12px;
+}
+.logistics-card.full-width { grid-column: 1/-1; }
+
+.supply-item {
+  display: flex; flex-direction: column;
+  gap: 4px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(26,58,92,0.3);
+}
+.supply-header {
+  display: flex; justify-content: space-between;
+  font-size: 12px;
+}
+.supply-name { font-family: 'Rajdhani', sans-serif; font-weight: 600; color: var(--text-primary); }
+.supply-val { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--accent-amber); }
+.supply-bar-bg {
+  height: 4px;
+  background: rgba(255,255,255,0.08);
+}
+.supply-bar-fill {
+  height: 100%;
+  transition: width 0.5s ease;
+}
+
+/* ══════════════ AAR VIEW ══════════════ */
+#aar-view {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+}
+.timeline {
+  position: relative;
+  padding-left: 24px;
+}
+.timeline::before {
+  content: '';
+  position: absolute; left: 8px; top: 0; bottom: 0;
+  width: 1px;
+  background: var(--border-primary);
+}
+.timeline-event {
+  position: relative;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  transition: all 0.2s;
+}
+.timeline-event::before {
+  content: '';
+  position: absolute; left: -20px; top: 14px;
+  width: 8px; height: 8px; border-radius: 50%;
+  border: 2px solid var(--border-accent);
+  background: var(--bg-primary);
+}
+.timeline-event.critical::before { background: var(--accent-red); border-color: var(--accent-red); box-shadow: 0 0 8px var(--accent-red); }
+.timeline-event.positive::before { background: var(--accent-green); border-color: var(--accent-green); }
+.timeline-event.neutral::before { background: var(--accent-amber); border-color: var(--accent-amber); }
+.event-time {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  color: var(--accent-cyan);
+  margin-bottom: 4px;
+}
+.event-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px; font-weight: 700;
+  color: var(--text-bright);
+  margin-bottom: 4px;
+}
+.event-desc {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.event-impact {
+  margin-top: 6px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--accent-amber);
+  background: rgba(255,170,0,0.08);
+  border-left: 2px solid var(--accent-amber);
+  padding: 3px 6px;
+}
+
+/* ══════════════ RIGHT PANEL ══════════════ */
+#right-panel {
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border-primary);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+/* INTEL FEED */
+.intel-feed {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+.intel-feed::-webkit-scrollbar { width: 2px; }
+.intel-feed::-webkit-scrollbar-thumb { background: var(--border-accent); }
+
+.intel-item {
+  padding: 8px;
+  border-bottom: 1px solid rgba(26,58,92,0.4);
+  transition: background 0.15s;
+}
+.intel-item:hover { background: var(--bg-hover); }
+.intel-time {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  color: var(--accent-cyan);
+  margin-bottom: 3px;
+}
+.intel-text {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+.intel-text strong { color: var(--text-primary); }
+.intel-priority {
+  display: inline-block;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px;
+  padding: 1px 5px;
+  margin-right: 4px;
+  border: 1px solid;
+}
+.prio-flash { color: var(--accent-red); border-color: var(--accent-red); background: rgba(255,51,85,0.1); }
+.prio-high { color: var(--accent-amber); border-color: var(--accent-amber); background: rgba(255,170,0,0.1); }
+.prio-low { color: var(--text-muted); border-color: var(--text-muted); }
+
+/* METRICS PANEL */
+.metrics-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border-primary);
+  border-top: 1px solid var(--border-primary);
+}
+.metric-cell {
+  background: var(--bg-panel);
+  padding: 8px 10px;
+  text-align: center;
+}
+.metric-cell-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px; letter-spacing: 1px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.metric-cell-val {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px; font-weight: 700;
+}
+
+/* SECTOR ANALYSIS */
+.sector-bars { padding: 8px; }
+.sector-row {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px;
+}
+.sector-label {
+  width: 60px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  color: var(--text-secondary);
+  text-align: right;
+  flex-shrink: 0;
+}
+.sector-bar-bg {
+  flex: 1;
+  height: 12px;
+  background: rgba(255,255,255,0.05);
+  position: relative;
+  overflow: hidden;
+}
+.sector-bar-us {
+  position: absolute; left: 0; top: 0; height: 100%;
+  background: var(--us-color);
+  opacity: 0.8;
+  transition: width 0.8s ease;
+}
+.sector-bar-iran {
+  position: absolute; right: 0; top: 0; height: 100%;
+  background: var(--iran-color);
+  opacity: 0.8;
+  transition: width 0.8s ease;
+}
+.sector-midline {
+  position: absolute; left: 50%; top: 0; bottom: 0;
+  width: 1px; background: rgba(255,255,255,0.2);
+}
+
+/* ══════════════ ALERTS / NOTIFICATIONS ══════════════ */
+#alert-bar {
+  position: fixed; bottom: 0; left: 260px; right: 280px;
+  height: 28px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-primary);
+  display: flex; align-items: center;
+  overflow: hidden;
+  z-index: 50;
+}
+.alert-ticker {
+  display: flex;
+  animation: ticker 40s linear infinite;
+  white-space: nowrap;
+}
+.alert-item {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  padding: 0 32px;
+  color: var(--text-secondary);
+}
+.alert-item.critical { color: var(--accent-red); }
+.alert-item.warning { color: var(--accent-amber); }
+.alert-sep {
+  color: var(--accent-blue);
+  padding: 0 8px;
+}
+@keyframes ticker {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+/* ANIMATION: DATA STREAM */
+@keyframes data-flow {
+  0% { opacity: 0; transform: translateY(-4px); }
+  20% { opacity: 1; transform: translateY(0); }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* BLINKING CURSOR */
+.cursor-blink::after {
+  content: '█';
+  animation: blink 1s step-end infinite;
+  color: var(--accent-cyan);
+}
+
+/* BUTTON */
+.action-btn {
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid var(--border-accent);
+  color: var(--accent-blue);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px; font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+.action-btn:hover { background: rgba(0,168,212,0.15); border-color: var(--accent-cyan); color: var(--accent-cyan); }
+.action-btn.danger { border-color: var(--accent-red); color: var(--accent-red); }
+.action-btn.danger:hover { background: rgba(255,51,85,0.15); }
+.action-btn.success { border-color: var(--accent-green); color: var(--accent-green); }
+.action-btn.success:hover { background: rgba(0,255,136,0.15); }
+
+/* GLITCH EFFECT */
+@keyframes glitch {
+  0%,100% { clip-path: inset(0 0 100% 0); transform: translate(0); }
+  10% { clip-path: inset(20% 0 50% 0); transform: translate(-2px, 1px); }
+  20% { clip-path: inset(60% 0 10% 0); transform: translate(2px, -1px); }
+  30% { clip-path: inset(0 0 0 0); transform: translate(0); }
+}
+
+/* responsive scrollbar hiding for inner panels */
+.panel-scroll::-webkit-scrollbar { width: 2px; }
+#analytics-view::-webkit-scrollbar { width: 3px; }
+#analytics-view::-webkit-scrollbar-thumb { background: var(--border-accent); }
+#wargame-view::-webkit-scrollbar { width: 3px; }
+#wargame-view::-webkit-scrollbar-thumb { background: var(--border-accent); }
+#coa-view::-webkit-scrollbar { width: 3px; }
+#coa-view::-webkit-scrollbar-thumb { background: var(--border-accent); }
+#logistics-view::-webkit-scrollbar { width: 3px; }
+#logistics-view::-webkit-scrollbar-thumb { background: var(--border-accent); }
+#aar-view::-webkit-scrollbar { width: 3px; }
+#aar-view::-webkit-scrollbar-thumb { background: var(--border-accent); }
+.intel-feed::-webkit-scrollbar { width: 2px; }
+.intel-feed::-webkit-scrollbar-thumb { background: var(--border-accent); }
+
+/* SPECIAL: AAR playback controls */
+.aar-controls {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  margin-bottom: 12px;
+}
+.playback-btn {
+  width: 28px; height: 28px;
+  border: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+.playback-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+.playback-btn.active { border-color: var(--accent-green); color: var(--accent-green); background: rgba(0,255,136,0.1); }
+.playback-timeline {
+  flex: 1;
+  height: 4px;
+  background: rgba(255,255,255,0.1);
+  position: relative;
+  cursor: pointer;
+}
+.playback-progress {
+  height: 100%;
+  background: var(--accent-cyan);
+  width: 35%;
+  transition: width 0.3s;
+}
+.playback-head {
+  position: absolute;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--accent-cyan);
+  top: -3px; left: 33%;
+  box-shadow: 0 0 8px var(--accent-cyan);
+}
+.playback-time {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--accent-amber);
+  white-space: nowrap;
+}
+
+/* Scenario compare table */
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.compare-table th {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--accent-blue);
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-primary);
+}
+.compare-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(26,58,92,0.3);
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.compare-table tr:hover td { background: var(--bg-hover); color: var(--text-primary); }
+.td-highlight { color: var(--accent-amber) !important; }
+.td-good { color: var(--accent-green) !important; }
+.td-bad { color: var(--accent-red) !important; }
+
+/* LESSONS LEARNED */
+.lesson-card {
+  background: var(--bg-card);
+  border-left: 3px solid var(--accent-amber);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.lesson-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px; font-weight: 700;
+  color: var(--accent-amber);
+  margin-bottom: 4px;
+}
+.lesson-text {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <div class="header-left">
+    <div class="header-emblem">CG</div>
+    <div>
+      <div class="header-title">CENTCOM WARGAME SYSTEM</div>
+      <div class="header-subtitle">OPERATION IRON MERIDIAN — US/IRAN THEATER</div>
+    </div>
+  </div>
+  <div class="header-center">
+    <div class="nav-tab active" onclick="switchTab('map')">THEATER MAP</div>
+    <div class="nav-tab" onclick="switchTab('analytics')">ANALYTICS</div>
+    <div class="nav-tab" onclick="switchTab('wargame')">WARGAME ENGINE</div>
+    <div class="nav-tab" onclick="switchTab('coa')">COA GENERATOR</div>
+    <div class="nav-tab" onclick="switchTab('logistics')">LOGISTICS</div>
+    <div class="nav-tab" onclick="switchTab('aar')">AAR</div>
+  </div>
+  <div class="header-right">
+    <div class="status-indicator">
+      <div class="status-dot"></div>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--accent-green)">SYS ONLINE</span>
+    </div>
+    <div class="clock" id="clock">--:--:-- Z</div>
+    <button class="action-btn" onclick="runSimulation()">▶ EXECUTE SIM</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+
+  <!-- LEFT PANEL: FORCE STRUCTURE -->
+  <div id="left-panel">
+    <div class="panel-header">
+      <span class="panel-title">FORCE STRUCTURE</span>
+      <span class="panel-badge">OOB</span>
+    </div>
+    <div class="side-selector">
+      <div class="side-btn us active" onclick="selectSide('us',this)">🇺🇸 US CENTCOM</div>
+      <div class="side-btn iran" onclick="selectSide('iran',this)">🇮🇷 IRGC/IRIAF</div>
+    </div>
+    <div class="panel-scroll" id="force-panel">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- CENTER: MAIN VIEWS -->
+  <div id="center-panel">
+
+    <!-- MAP VIEW -->
+    <div id="map-view" class="tab-view active">
+      <div id="map-container">
+        <div id="theater-map">
+          <!-- SVG Theater Map -->
+          <svg id="map-svg" viewBox="0 0 800 550" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <!-- Background Ocean -->
+            <rect width="800" height="550" fill="#030d18"/>
+            <!-- Grid -->
+            <defs>
+              <pattern id="mapgrid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(0,168,212,0.07)" stroke-width="0.5"/>
+              </pattern>
+              <radialGradient id="gulfGrad" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#041828"/>
+                <stop offset="100%" stop-color="#020c14"/>
+              </radialGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <rect width="800" height="550" fill="url(#mapgrid)"/>
+
+            <!-- ARABIAN SEA -->
+            <ellipse cx="620" cy="380" rx="160" ry="120" fill="#030f1e" opacity="0.8"/>
+            <text x="620" y="385" text-anchor="middle" font-family="Share Tech Mono, monospace" font-size="10" fill="rgba(0,168,212,0.3)" letter-spacing="3">ARABIAN SEA</text>
+
+            <!-- PERSIAN GULF -->
+            <path d="M 340 200 Q 380 220 420 240 Q 460 255 480 270 Q 500 285 490 310 Q 480 330 460 340 Q 440 345 420 340 Q 380 330 360 310 Q 340 290 335 270 Q 330 245 340 200Z" fill="#031424" stroke="rgba(0,168,212,0.2)" stroke-width="1"/>
+            <text x="405" y="290" text-anchor="middle" font-family="Share Tech Mono, monospace" font-size="9" fill="rgba(0,168,212,0.4)" letter-spacing="2">PERSIAN GULF</text>
+
+            <!-- STRAIT OF HORMUZ label -->
+            <text x="455" y="338" text-anchor="middle" font-family="Share Tech Mono, monospace" font-size="7" fill="rgba(255,170,0,0.6)" letter-spacing="1">STRAIT OF HORMUZ</text>
+            <line x1="440" y1="335" x2="490" y2="345" stroke="rgba(255,170,0,0.4)" stroke-width="0.5" stroke-dasharray="3,3"/>
+
+            <!-- RED SEA -->
+            <path d="M 200 150 Q 220 200 240 260 Q 250 310 245 360 Q 240 390 230 410 Q 215 420 200 415 Q 185 420 175 410 Q 165 390 160 360 Q 155 310 160 260 Q 170 200 185 150Z" fill="#031424" stroke="rgba(0,168,212,0.2)" stroke-width="1"/>
+            <text x="207" y="290" text-anchor="middle" font-family="Share Tech Mono, monospace" font-size="9" fill="rgba(0,168,212,0.35)" letter-spacing="2" transform="rotate(-5, 207, 290)">RED SEA</text>
+
+            <!-- IRAN TERRITORY -->
+            <path d="M 380 80 Q 430 70 490 75 Q 550 80 590 110 Q 630 140 640 180 Q 645 210 630 240 Q 610 265 590 275 Q 560 285 530 280 Q 500 275 480 265 Q 460 255 440 245 Q 420 230 400 215 Q 375 195 365 170 Q 355 145 360 115 Q 368 90 380 80Z" fill="#1a0a08" stroke="#cc3300" stroke-width="1.5" opacity="0.85"/>
+            <text x="510" y="175" text-anchor="middle" font-family="Rajdhani, sans-serif" font-size="16" font-weight="700" fill="rgba(204,51,0,0.8)" letter-spacing="2">IRAN</text>
+
+            <!-- IRAQ TERRITORY -->
+            <path d="M 300 100 Q 360 90 380 80 Q 365 110 355 145 Q 347 170 365 195 Q 345 210 320 220 Q 295 225 275 215 Q 258 205 255 185 Q 252 160 260 135 Q 270 110 300 100Z" fill="#0c1408" stroke="rgba(100,150,50,0.4)" stroke-width="1" opacity="0.8"/>
+            <text x="313" y="165" text-anchor="middle" font-family="Rajdhani, sans-serif" font-size="12" font-weight="700" fill="rgba(150,200,100,0.6)">IRAQ</text>
+
+            <!-- SAUDI ARABIA -->
+            <path d="M 220 200 Q 255 185 275 215 Q 295 225 320 220 Q 365 195 400 215 Q 420 230 440 245 Q 420 260 400 270 Q 380 280 355 285 Q 330 290 300 295 Q 265 295 240 280 Q 215 265 215 240 Q 215 220 220 200Z" fill="#14100a" stroke="rgba(150,120,50,0.3)" stroke-width="0.5" opacity="0.8"/>
+            <text x="315" y="258" text-anchor="middle" font-family="Rajdhani, sans-serif" font-size="11" font-weight="700" fill="rgba(200,170,80,0.5)">SAUDI ARABIA</text>
+
+            <!-- UAE/OMAN coast -->
+            <path d="M 460 310 Q 490 320 520 340 Q 550 360 570 390 Q 580 410 575 430 Q 555 450 530 455 Q 500 458 475 445 Q 450 430 440 405 Q 435 380 440 360 Q 445 340 460 310Z" fill="#0a0c10" stroke="rgba(100,120,150,0.3)" stroke-width="0.5" opacity="0.8"/>
+            <text x="495" y="400" text-anchor="middle" font-family="Rajdhani, sans-serif" font-size="9" fill="rgba(150,180,200,0.4)">UAE/OMAN</text>
+
+            <!-- YEMEN -->
+            <path d="M 170 410 Q 200 415 230 415 Q 260 415 290 405 Q 310 395 310 410 Q 290 440 260 455 Q 230 465 200 460 Q 170 450 160 430 Q 155 420 170 410Z" fill="#100c08" stroke="rgba(150,100,50,0.3)" stroke-width="0.5" opacity="0.8"/>
+            <text x="235" y="440" text-anchor="middle" font-family="Rajdhani, sans-serif" font-size="9" fill="rgba(180,130,80,0.4)">YEMEN</text>
+
+            <!-- QATAR dot -->
+            <circle cx="438" cy="300" r="6" fill="rgba(0,136,255,0.3)" stroke="rgba(0,136,255,0.5)" stroke-width="1"/>
+            <text x="438" y="320" text-anchor="middle" font-family="Share Tech Mono, monospace" font-size="7" fill="rgba(0,136,255,0.6)">AL UDEID</text>
+
+            <!-- RANGE ARCS - missile threat rings from Iran -->
+            <circle cx="510" cy="175" r="120" fill="none" stroke="rgba(204,51,0,0.15)" stroke-width="1" stroke-dasharray="4,4"/>
+            <circle cx="510" cy="175" r="200" fill="none" stroke="rgba(204,51,0,0.10)" stroke-width="1" stroke-dasharray="3,6"/>
+            <text x="620" y="120" font-family="Share Tech Mono, monospace" font-size="7" fill="rgba(204,51,0,0.4)">SRBM 700km</text>
+            <text x="640" y="60" font-family="Share Tech Mono, monospace" font-size="7" fill="rgba(204,51,0,0.3)">MRBM 2000km</text>
+
+            <!-- US FORCE VECTORS -->
+            <!-- CSG Roosevelt - Arabian Sea -->
+            <g filter="url(#glow)">
+              <rect x="590" y="350" width="22" height="16" rx="2" fill="rgba(0,80,180,0.85)" stroke="#0088ff" stroke-width="1.5"/>
+              <text x="601" y="361" text-anchor="middle" font-family="Rajdhani" font-size="9" font-weight="700" fill="white">CVN</text>
+            </g>
+            <text x="625" y="358" font-family="Share Tech Mono, monospace" font-size="8" fill="rgba(0,136,255,0.7)">USS ROOSEVELT</text>
+            <text x="625" y="368" font-family="Share Tech Mono, monospace" font-size="7" fill="rgba(0,136,255,0.5)">CSG-12 ■ CVN+5DDG</text>
+
+            <!-- B-52 Diego Garcia -->
+            <g filter="url(#glow)">
+              <rect x="550" y="480" width="22" height="16" rx="2" fill="rgba(0,80,180,0.85)" stroke="#0088ff" stroke-width="1.5"/>
+              <text x="561" y="491" text-anchor="middle" font-family="Rajdhani" font-size="9" font-weight="700" fill="white">B52</text>
+            </g>
+            <text x="575" y="488" font-family="Share Tech Mono, monospace" font-size="8" fill="rgba(0,136,255,0.7)">DIEGO GARCIA</text>
+            <text x="575" y="498" font-family="Share Tech Mono, monospace" font-size="7" fill="rgba(0,136,255,0.5)">6x B-52H ■ BOMBER TF</text>
+
+            <!-- F-22 Al Dhafra -->
+            <g filter="url(#glow)">
+              <rect x="468" y="355" width="22" height="16" rx="2" fill="rgba(0,80,180,0.85)" stroke="#0088ff" stroke-width="1.5"/>
+              <text x="479" y="366" text-anchor="middle" font-family="Rajdhani" font-size="9" font-weight="700" fill="white">F22</text>
+            </g>
+            <text x="493" y="362" font-family="Share Tech Mono, monospace" font-size="7" fill="rgba(0,136,255,0.6)">AL DHAFRA ■ 24 F-22A</text>
+
+            <!-- THAAD Battery -->
+            <g filter="url(#glow)">
+              <rect x="394" y="295" width="28" height="16" rx="2" fill="rgba(0,60,160,0.85)" stroke="#0066dd" stroke-width="1.5"/>
+              <text x="408" y="306" text-anchor="middle" font-family="Rajdhani" font-size="9" font-weight="700" fill="white">THAAD</text>
+            </g>
+
+            <!-- US Submarines -->
+            <g filter="url(#glow)">
+              <ellipse cx="660" cy="420" rx="12" ry="8" fill="rgba(0,80,180,0.7)" stroke="#0088ff" stroke-width="1"/>
+              <text x="660" y="423" text-anchor="middle" font-family="Rajdhani" font-size="8" font-weight="700" fill="white">SSN</text>
+            </g>
+            <text x="674" y="420" font-family="Share Tech Mono, monospace" font-size="7" fill="rgba(0,136,255,0.5)">2x SSN (COVERT)</text>
+
+            <!-- IRAN FORCES -->
+            <!-- IRGC Missile Bde -->
+            <g filter="url(#glow)">
+              <rect x="520" y="130" width="28" height="16" rx="2" fill="rgba(140,30,0,0.85)" stroke="#cc3300" stroke-width="1.5"/>
+              <text x="534" y="141" text-anchor="middle" font-family="Rajdhani" font-size="9" font-weight="700" fill="white">MSLS</text>
+            </g>
+            <text x="550" y="138" font-family="Share Tech Mono, monospace" font-size="7" fill="rgba(204,51,0,0.7)">SHAHAB/SEJJIL BDE</text>
+
+            <!-- IRIAF Tabriz -->
+            <g filter="url(#glow)">
+              <rect x="445" y="90" width="28" height="16" rx="2" fill="rgba(140,30,0,0.85)" stroke="#cc3300" stroke-width="1.5"/>
+              <text x="459" y="101" text-anchor="middle" font-family="Rajdhani" font-size="9" font-weight="700" fill="white">F-14</text>
+            </g>
+            <text x="476" y="98" font-family="Share Tech Mono, monospace" font-size="7" fill="rgba(204,51,0,0.7)">TABRIZ ■ 24 F-14A</text>
+
+            <!-- IRGCN Fast Boats -->
+            <g filter="url(#glow)">
+              <rect x="455" y="270" width="28" height="16" rx="2" fill="rgba(140,30,0,0.85)" stroke="#cc3300" stroke-width="1.5"/>
+              <text x="469" y="281" text-anchor="middle" font-family="Rajdhani" font-size="9" font-weight="700" fill="white">IRGCN</text>
+            </g>
+            <text x="486" y="278" font-family="Share Tech Mono, monospace" font-size="7" fill="rgba(204,51,0,0.7)">FAST ATTACK ■ 80+</text>
+
+            <!-- Fordow Nuclear Site -->
+            <g>
+              <circle cx="490" cy="155" r="6" fill="none" stroke="rgba(255,170,0,0.8)" stroke-width="1.5" stroke-dasharray="2,2"/>
+              <circle cx="490" cy="155" r="3" fill="rgba(255,170,0,0.4)"/>
+            </g>
+            <text x="500" y="152" font-family="Share Tech Mono, monospace" font-size="7" fill="rgba(255,170,0,0.7)">FORDOW</text>
+
+            <!-- Natanz -->
+            <g>
+              <circle cx="465" cy="200" r="6" fill="none" stroke="rgba(255,170,0,0.8)" stroke-width="1.5" stroke-dasharray="2,2"/>
+              <circle cx="465" cy="200" r="3" fill="rgba(255,170,0,0.4)"/>
+            </g>
+            <text x="475" y="197" font-family="Share Tech Mono, monospace" font-size="7" fill="rgba(255,170,0,0.7)">NATANZ</text>
+
+            <!-- STRIKE VECTORS (animated) -->
+            <g opacity="0.6">
+              <path d="M 601 350 Q 560 280 490 155" fill="none" stroke="rgba(0,136,255,0.6)" stroke-width="1" stroke-dasharray="6,4">
+                <animate attributeName="stroke-dashoffset" from="0" to="-100" dur="3s" repeatCount="indefinite"/>
+              </path>
+              <path d="M 561 480 Q 540 360 465 200" fill="none" stroke="rgba(0,136,255,0.5)" stroke-width="1" stroke-dasharray="5,5">
+                <animate attributeName="stroke-dashoffset" from="0" to="-100" dur="4s" repeatCount="indefinite"/>
+              </path>
+            </g>
+
+            <!-- IRAN MISSILE TRACKS -->
+            <g opacity="0.5">
+              <path d="M 534 130 Q 510 200 438 300" fill="none" stroke="rgba(204,51,0,0.7)" stroke-width="1" stroke-dasharray="4,4">
+                <animate attributeName="stroke-dashoffset" from="0" to="-80" dur="2s" repeatCount="indefinite"/>
+              </path>
+              <path d="M 534 130 Q 560 200 601 350" fill="none" stroke="rgba(204,51,0,0.5)" stroke-width="1" stroke-dasharray="3,5">
+                <animate attributeName="stroke-dashoffset" from="0" to="-80" dur="2.5s" repeatCount="indefinite"/>
+              </path>
+            </g>
+
+            <!-- COORDINATE LABELS -->
+            <text x="10" y="20" font-family="Share Tech Mono, monospace" font-size="8" fill="rgba(0,168,212,0.3)">25°N</text>
+            <text x="10" y="80" font-family="Share Tech Mono, monospace" font-size="8" fill="rgba(0,168,212,0.3)">30°N</text>
+            <text x="10" y="540" font-family="Share Tech Mono, monospace" font-size="8" fill="rgba(0,168,212,0.3)">15°N</text>
+            <text x="770" y="540" font-family="Share Tech Mono, monospace" font-size="8" fill="rgba(0,168,212,0.3)">60°E</text>
+            <text x="370" y="540" font-family="Share Tech Mono, monospace" font-size="8" fill="rgba(0,168,212,0.3)">45°E</text>
+
+            <!-- LEGEND -->
+            <rect x="10" y="460" width="110" height="70" fill="rgba(3,8,16,0.85)" stroke="rgba(26,58,92,0.6)" stroke-width="1"/>
+            <text x="20" y="474" font-family="Orbitron, sans-serif" font-size="7" fill="rgba(0,168,212,0.7)" letter-spacing="1">LEGEND</text>
+            <rect x="20" y="480" width="10" height="6" rx="1" fill="rgba(0,80,180,0.8)" stroke="#0088ff" stroke-width="0.5"/>
+            <text x="34" y="486" font-family="Share Tech Mono, monospace" font-size="7" fill="rgba(0,136,255,0.7)">US/COALITION</text>
+            <rect x="20" y="492" width="10" height="6" rx="1" fill="rgba(140,30,0,0.8)" stroke="#cc3300" stroke-width="0.5"/>
+            <text x="34" y="498" font-family="Share Tech Mono, monospace" font-size="7" fill="rgba(204,51,0,0.7)">IRAN FORCES</text>
+            <circle cx="25" cy="509" r="4" fill="none" stroke="rgba(255,170,0,0.8)" stroke-width="1" stroke-dasharray="2,1"/>
+            <text x="34" y="512" font-family="Share Tech Mono, monospace" font-size="7" fill="rgba(255,170,0,0.6)">NUCLEAR SITE</text>
+            <path d="M 20 520 Q 30 518 40 520" fill="none" stroke="rgba(0,136,255,0.5)" stroke-width="1" stroke-dasharray="3,2"/>
+            <text x="45" y="523" font-family="Share Tech Mono, monospace" font-size="7" fill="rgba(0,136,255,0.5)">STRIKE VECTOR</text>
+
+            <!-- CLASSIFICATION BANNER -->
+            <rect x="250" y="8" width="300" height="14" fill="rgba(255,0,0,0.15)" stroke="rgba(255,0,0,0.4)" stroke-width="0.5"/>
+            <text x="400" y="18" text-anchor="middle" font-family="Share Tech Mono, monospace" font-size="9" fill="rgba(255,100,100,0.8)" letter-spacing="3">⬛ TOP SECRET / SCI ⬛</text>
+          </svg>
+
+          <!-- FORCE MARKERS (HTML overlays) -->
+        </div>
+
+        <!-- Map Controls -->
+        <div class="map-controls">
+          <button class="map-ctrl-btn" title="Zoom In">+</button>
+          <button class="map-ctrl-btn" title="Zoom Out">−</button>
+          <button class="map-ctrl-btn" title="Reset">⌂</button>
+          <button class="map-ctrl-btn" title="Layers" onclick="toggleLayerPanel()">☰</button>
+        </div>
+
+        <!-- Layer Panel -->
+        <div class="layer-panel" id="layer-panel">
+          <div class="layer-title">MAP LAYERS</div>
+          <label class="layer-toggle">
+            <div class="toggle-switch on" id="toggle-forces" onclick="toggleLayer(this)"><div class="toggle-knob"></div></div>
+            <span>Force Disposition</span>
+          </label>
+          <label class="layer-toggle">
+            <div class="toggle-switch on" id="toggle-vectors" onclick="toggleLayer(this)"><div class="toggle-knob"></div></div>
+            <span>Strike Vectors</span>
+          </label>
+          <label class="layer-toggle">
+            <div class="toggle-switch on" id="toggle-threats" onclick="toggleLayer(this)"><div class="toggle-knob"></div></div>
+            <span>Threat Rings</span>
+          </label>
+          <label class="layer-toggle">
+            <div class="toggle-switch" id="toggle-logistics" onclick="toggleLayer(this)"><div class="toggle-knob"></div></div>
+            <span>Log Lines</span>
+          </label>
+          <label class="layer-toggle">
+            <div class="toggle-switch" id="toggle-electronic" onclick="toggleLayer(this)"><div class="toggle-knob"></div></div>
+            <span>EW Coverage</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- COMBAT STATUS BAR -->
+      <div class="combat-status-bar">
+        <div class="status-metric">
+          <span class="status-label">PHASE</span>
+          <span class="status-value amber" id="current-phase">D+0 / H-HOUR</span>
+        </div>
+        <div class="status-metric">
+          <span class="status-label">US COMBAT POWER</span>
+          <span class="status-value blue" id="us-combat-power">8.74</span>
+        </div>
+        <div class="status-metric">
+          <span class="status-label">IRAN COMBAT POWER</span>
+          <span class="status-value red" id="iran-combat-power">3.21</span>
+        </div>
+        <div class="status-metric">
+          <span class="status-label">FORCE RATIO</span>
+          <span class="status-value green" id="force-ratio">2.72:1</span>
+        </div>
+        <div class="status-metric">
+          <span class="status-label">WIN P(US)</span>
+          <span class="status-value blue" id="win-prob">76%</span>
+        </div>
+        <div class="status-metric">
+          <span class="status-label">STRAIT STATUS</span>
+          <span class="status-value amber" id="strait-status">CONTESTED</span>
+        </div>
+        <div class="status-metric">
+          <span class="status-label">SIMULATION</span>
+          <span class="status-value green" id="sim-status">STANDBY</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS VIEW -->
+    <div id="analytics-view" class="tab-view">
+      <!-- Probability Card -->
+      <div class="chart-card full-width">
+        <div class="chart-title">
+          COMBAT OUTCOME PROBABILITY
+          <span style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--text-muted)">LANCHESTER-PROBABILISTIC MODEL</span>
+        </div>
+        <div class="probability-display">
+          <div class="prob-side">
+            <div class="prob-label" style="color:var(--us-color)">US COALITION VICTORY</div>
+            <div class="prob-value" style="color:var(--us-color)" id="us-prob">76%</div>
+            <div class="prob-bar-container"><div class="prob-bar-fill" style="width:76%;background:var(--us-color)"></div></div>
+            <div style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--text-muted);margin-top:4px">Decisive: 48% | Pyrrhic: 28%</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 20px;">
+            <div style="font-family:Orbitron,sans-serif;font-size:10px;color:var(--text-muted);letter-spacing:2px">VS</div>
+            <div style="width:1px;height:40px;background:var(--border-primary);margin:8px 0"></div>
+            <div style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--text-muted)">Stalemate: 8%</div>
+          </div>
+          <div class="prob-side">
+            <div class="prob-label" style="color:var(--iran-color)">IRAN STRATEGIC SURVIVAL</div>
+            <div class="prob-value" style="color:var(--iran-color)" id="iran-prob">16%</div>
+            <div class="prob-bar-container"><div class="prob-bar-fill" style="width:16%;background:var(--iran-color)"></div></div>
+            <div style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--text-muted);margin-top:4px">A2/AD Hold: 12% | Regime Survival: 4%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Attrition Chart -->
+      <div class="chart-card">
+        <div class="chart-title">FORCE ATTRITION CURVE (30 DAYS)</div>
+        <div class="chart-area">
+          <canvas id="attrition-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Resource Consumption -->
+      <div class="chart-card">
+        <div class="chart-title">MUNITIONS EXPENDITURE RATE</div>
+        <div class="chart-area">
+          <canvas id="munitions-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Casualty Estimates -->
+      <div class="chart-card">
+        <div class="chart-title">
+          CASUALTY ESTIMATES
+          <span style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--text-muted)">KIA/WIA PROJECTION</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px">
+          <div>
+            <div style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--us-color);margin-bottom:6px">US FORCES (30-DAY)</div>
+            <div class="result-row"><span class="result-label">KIA</span><span class="result-value" style="color:var(--accent-red)">~320–680</span></div>
+            <div class="result-row"><span class="result-label">WIA</span><span class="result-value" style="color:var(--accent-amber)">~1,200–2,800</span></div>
+            <div class="result-row"><span class="result-label">AIRCRAFT LOST</span><span class="result-value" style="color:var(--accent-red)">12–24</span></div>
+            <div class="result-row"><span class="result-label">SHIPS DAMAGED</span><span class="result-value" style="color:var(--accent-amber)">2–4</span></div>
+          </div>
+          <div>
+            <div style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--iran-color);margin-bottom:6px">IRAN FORCES (30-DAY)</div>
+            <div class="result-row"><span class="result-label">KIA</span><span class="result-value" style="color:var(--accent-red)">~8,000–18,000</span></div>
+            <div class="result-row"><span class="result-label">WIA</span><span class="result-value" style="color:var(--accent-amber)">~22,000–45,000</span></div>
+            <div class="result-row"><span class="result-label">AIRCRAFT LOST</span><span class="result-value" style="color:var(--accent-red)">65–120</span></div>
+            <div class="result-row"><span class="result-label">MISSILES EXPENDED</span><span class="result-value" style="color:var(--accent-amber)">40–70%</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Operational Timeline -->
+      <div class="chart-card">
+        <div class="chart-title">OPERATIONAL TIMELINE TO OBJECTIVE</div>
+        <div style="margin-top:8px">
+          <div class="result-row"><span class="result-label">AIR SUPERIORITY ACHIEVED</span><span class="result-value" style="color:var(--accent-green)">D+3 to D+6</span></div>
+          <div class="result-row"><span class="result-label">MISSILE FORCE ATTRITED 50%</span><span class="result-value" style="color:var(--accent-amber)">D+7 to D+14</span></div>
+          <div class="result-row"><span class="result-label">NUCLEAR SITES NEUTRALIZED</span><span class="result-value" style="color:var(--accent-amber)">D+4 to D+10</span></div>
+          <div class="result-row"><span class="result-label">STRAIT REOPENED (PARTIAL)</span><span class="result-value" style="color:var(--accent-amber)">D+12 to D+21</span></div>
+          <div class="result-row"><span class="result-label">CAMPAIGN END STATE</span><span class="result-value" style="color:var(--accent-cyan)">D+28 to D+45</span></div>
+          <div class="result-row"><span class="result-label">ESCALATION TO THEATER WAR</span><span class="result-value" style="color:var(--accent-red)">12% PROBABILITY</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WARGAME ENGINE VIEW -->
+    <div id="wargame-view" class="tab-view">
+      <!-- Scenario Setup -->
+      <div class="scenario-card">
+        <div class="chart-title" style="margin-bottom:10px">SCENARIO CONFIGURATION</div>
+        <div class="form-group">
+          <label class="form-label">Scenario Name</label>
+          <input class="form-input" type="text" value="Operation Iron Meridian — Baseline" id="scenario-name"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Opening Move</label>
+          <select class="form-select" id="opening-move">
+            <option>US Preemptive Strike (Nuclear Sites)</option>
+            <option>Iran Strait Closure + Missile Salvo</option>
+            <option>US Cyber + Stealth Strike Package</option>
+            <option>Iran Proxy Activation (Multi-Front)</option>
+            <option>Mutual Escalation Spiral</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Escalation Ceiling</label>
+          <select class="form-select">
+            <option>Conventional Only</option>
+            <option>Tactical Nuclear Threshold</option>
+            <option>Unrestricted (Full Spectrum)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Stochastic Variance (%)</label>
+          <input class="form-input" type="range" min="0" max="40" value="15" id="variance-slider" oninput="updateVariance(this.value)"/>
+          <span style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--accent-amber)" id="variance-label">±15%</span>
+        </div>
+      </div>
+
+      <!-- Multi-Domain Toggles -->
+      <div class="scenario-card">
+        <div class="chart-title" style="margin-bottom:8px">MULTI-DOMAIN EFFECTS</div>
+        <div class="multi-domain-grid">
+          <div class="domain-toggle enabled" id="toggle-ecm" onclick="toggleDomain(this,'ECM')">⚡ ECM / JAMMING</div>
+          <div class="domain-toggle enabled" id="toggle-cyber" onclick="toggleDomain(this,'CYBER')">⌨ CYBER OPS</div>
+          <div class="domain-toggle enabled" id="toggle-tmd" onclick="toggleDomain(this,'TMD')">🛡 MISSILE DEFENCE</div>
+          <div class="domain-toggle" id="toggle-space" onclick="toggleDomain(this,'SPACE')">🛰 SPACE/SAT DENIAL</div>
+          <div class="domain-toggle" id="toggle-info" onclick="toggleDomain(this,'INFO')">📡 INFO OPS</div>
+          <div class="domain-toggle enabled" id="toggle-sof" onclick="toggleDomain(this,'SOF')">⚔ SOF / CLANDESTINE</div>
+        </div>
+      </div>
+
+      <!-- Simulation Progress -->
+      <div class="scenario-card">
+        <div class="chart-title" style="margin-bottom:8px">SIMULATION ENGINE</div>
+        <div class="sim-progress" id="sim-progress">
+          <div class="sim-phase"><div class="phase-dot" id="ph1"></div>Force ratio calculation</div>
+          <div class="sim-phase"><div class="phase-dot" id="ph2"></div>Lanchester attrition modeling</div>
+          <div class="sim-phase"><div class="phase-dot" id="ph3"></div>Multi-domain effect integration</div>
+          <div class="sim-phase"><div class="phase-dot" id="ph4"></div>Logistics sustainment analysis</div>
+          <div class="sim-phase"><div class="phase-dot" id="ph5"></div>Stochastic Monte Carlo (1000 runs)</div>
+          <div class="sim-phase"><div class="phase-dot" id="ph6"></div>COA generation & outcome scoring</div>
+        </div>
+        <button class="run-btn" onclick="runSimulation()">▶ EXECUTE SIMULATION</button>
+      </div>
+
+      <!-- Scenario Comparison -->
+      <div class="scenario-card full-width">
+        <div class="chart-title" style="margin-bottom:10px">SCENARIO COMPARISON TABLE</div>
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>SCENARIO</th>
+              <th>OPENING MOVE</th>
+              <th>US WIN P%</th>
+              <th>US KIA</th>
+              <th>IRAN KIA</th>
+              <th>DURATION</th>
+              <th>STRAIT</th>
+              <th>ESCALATION P%</th>
+            </tr>
+          </thead>
+          <tbody id="scenario-table-body">
+            <tr>
+              <td class="td-highlight">Baseline Alpha</td>
+              <td>US Preemptive Air</td>
+              <td class="td-good">76%</td>
+              <td>~500</td>
+              <td>~13,000</td>
+              <td class="td-highlight">28–45d</td>
+              <td class="td-good">Reopened D+18</td>
+              <td>12%</td>
+            </tr>
+            <tr>
+              <td class="td-highlight">Iran First-Strike</td>
+              <td>Iran Strait + Missiles</td>
+              <td>61%</td>
+              <td>~1,200</td>
+              <td>~9,000</td>
+              <td class="td-highlight">35–55d</td>
+              <td class="td-bad">Closed 28d</td>
+              <td class="td-bad">28%</td>
+            </tr>
+            <tr>
+              <td class="td-highlight">Cyber-Led Strike</td>
+              <td>US Cyber + Stealth</td>
+              <td class="td-good">82%</td>
+              <td class="td-good">~280</td>
+              <td>~8,000</td>
+              <td class="td-good">21–35d</td>
+              <td class="td-good">Contested 12d</td>
+              <td class="td-good">7%</td>
+            </tr>
+            <tr>
+              <td class="td-highlight">Proxy Multi-Front</td>
+              <td>Iran + Hezbollah + Houthi</td>
+              <td>54%</td>
+              <td class="td-bad">~2,800</td>
+              <td>~22,000</td>
+              <td class="td-bad">60–90d</td>
+              <td class="td-bad">Closed 45d</td>
+              <td class="td-bad">35%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- COA GENERATOR VIEW -->
+    <div id="coa-view" class="tab-view">
+      <div style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--text-muted);letter-spacing:2px;margin-bottom:12px">AI-GENERATED COURSES OF ACTION — US CENTCOM PERSPECTIVE</div>
+      <div class="coa-grid">
+
+        <!-- COA 1: OFFENSIVE -->
+        <div class="coa-card selected" onclick="selectCOA(this)">
+          <div class="coa-type" style="color:var(--accent-red)">◈ COA-1 — OFFENSIVE</div>
+          <div class="coa-name">DECAPITATION STRIKE / SHOCK & AWE</div>
+          <div class="coa-desc">Immediate, overwhelming air campaign targeting C2 nodes, IRGC missile forces, nuclear infrastructure, and air defence networks. Navy CSGs provide sea control while B-2/B-21 strikers open with penetrating munitions. Objective: collapse Iranian operational coherence within 72 hours.</div>
+          <div class="coa-metrics">
+            <div class="coa-metric" style="border-color:var(--us-color)">
+              <span class="coa-metric-label">WIN PROBABILITY</span>
+              <span class="coa-metric-value" style="color:var(--us-color)">76%</span>
+            </div>
+            <div class="coa-metric" style="border-color:var(--accent-red)">
+              <span class="coa-metric-label">US CASUALTIES</span>
+              <span class="coa-metric-value" style="color:var(--accent-red)">HIGH</span>
+            </div>
+            <div class="coa-metric" style="border-color:var(--accent-amber)">
+              <span class="coa-metric-label">DURATION</span>
+              <span class="coa-metric-value" style="color:var(--accent-amber)">28–45d</span>
+            </div>
+            <div class="coa-metric" style="border-color:var(--accent-orange)">
+              <span class="coa-metric-label">ESCALATION RISK</span>
+              <span class="coa-metric-value" style="color:var(--accent-orange)">MEDIUM</span>
+            </div>
+          </div>
+          <div style="font-family:Share Tech Mono,monospace;font-size:8px;color:var(--text-muted);margin-bottom:4px">RISK LEVEL</div>
+          <div class="coa-risk-bar"><div class="coa-risk-fill" style="width:60%;background:var(--accent-orange)"></div></div>
+          <ul class="phase-list">
+            <li class="phase-item"><div class="phase-num">1</div>D-Day: 200+ TLAM/JASSM against IADS, radar sites, C2</li>
+            <li class="phase-item"><div class="phase-num">2</div>H+6: B-2 strikes Fordow, Natanz with GBU-57 MOP</li>
+            <li class="phase-item"><div class="phase-num">3</div>D+2: F-22/F-35 air superiority; SEAD complete</li>
+            <li class="phase-item"><div class="phase-num">4</div>D+4: CSG strike package — IRGCN naval suppression</li>
+            <li class="phase-item"><div class="phase-num">5</div>D+7: Sustained interdiction; missile BDEs attrited</li>
+          </ul>
+        </div>
+
+        <!-- COA 2: DEFENSIVE -->
+        <div class="coa-card" onclick="selectCOA(this)">
+          <div class="coa-type" style="color:var(--accent-blue)">◈ COA-2 — DEFENSIVE</div>
+          <div class="coa-name">IRON SHIELD / DETERRENCE IN DEPTH</div>
+          <div class="coa-desc">Forward defence posture — hold Iran's missile barrage with layered TMD (THAAD, Patriot, SM-6), while cyber operations degrade IRGC command and control. Impose costs without decisive offensive operations. Preserve force for extended campaign. Maximum political space for diplomacy.</div>
+          <div class="coa-metrics">
+            <div class="coa-metric" style="border-color:var(--accent-blue)">
+              <span class="coa-metric-label">WIN PROBABILITY</span>
+              <span class="coa-metric-value" style="color:var(--accent-blue)">52%</span>
+            </div>
+            <div class="coa-metric" style="border-color:var(--accent-green)">
+              <span class="coa-metric-label">US CASUALTIES</span>
+              <span class="coa-metric-value" style="color:var(--accent-green)">LOW</span>
+            </div>
+            <div class="coa-metric" style="border-color:var(--accent-amber)">
+              <span class="coa-metric-label">DURATION</span>
+              <span class="coa-metric-value" style="color:var(--accent-amber)">60–90d</span>
+            </div>
+            <div class="coa-metric" style="border-color:var(--accent-green)">
+              <span class="coa-metric-label">ESCALATION RISK</span>
+              <span class="coa-metric-value" style="color:var(--accent-green)">LOW</span>
+            </div>
+          </div>
+          <div style="font-family:Share Tech Mono,monospace;font-size:8px;color:var(--text-muted);margin-bottom:4px">RISK LEVEL</div>
+          <div class="coa-risk-bar"><div class="coa-risk-fill" style="width:28%;background:var(--accent-green)"></div></div>
+          <ul class="phase-list">
+            <li class="phase-item"><div class="phase-num">1</div>H-Hour: Activate THAAD/PAC-3 batteries, AEGIS BMD</li>
+            <li class="phase-item"><div class="phase-num">2</div>D+1: Cyber ops against IRGC missile guidance systems</li>
+            <li class="phase-item"><div class="phase-num">3</div>D+3: Limited SEAD package; protect friendly bases</li>
+            <li class="phase-item"><div class="phase-num">4</div>D+7: Economic warfare; oil interdiction (non-kinetic)</li>
+            <li class="phase-item"><div class="phase-num">5</div>D+14: Coercive signalling via B-21 overflight</li>
+          </ul>
+        </div>
+
+        <!-- COA 3: HYBRID -->
+        <div class="coa-card" onclick="selectCOA(this)">
+          <div class="coa-type" style="color:var(--accent-green)">◈ COA-3 — HYBRID</div>
+          <div class="coa-name">SCALPEL + SHIELD / CALIBRATED COERCION</div>
+          <div class="coa-desc">Precision cyber-kinetic campaign targeting IRGC missile forces and nuclear programme specifically, while using SOF and proxy networks to exploit internal fractures. TMD holds Tehran's retaliation. Maintains escalation dominance without triggering full war. Highest strategic utility.</div>
+          <div class="coa-metrics">
+            <div class="coa-metric" style="border-color:var(--accent-green)">
+              <span class="coa-metric-label">WIN PROBABILITY</span>
+              <span class="coa-metric-value" style="color:var(--accent-green)">82%</span>
+            </div>
+            <div class="coa-metric" style="border-color:var(--accent-green)">
+              <span class="coa-metric-label">US CASUALTIES</span>
+              <span class="coa-metric-value" style="color:var(--accent-green)">MINIMAL</span>
+            </div>
+            <div class="coa-metric" style="border-color:var(--accent-cyan)">
+              <span class="coa-metric-label">DURATION</span>
+              <span class="coa-metric-value" style="color:var(--accent-cyan)">21–35d</span>
+            </div>
+            <div class="coa-metric" style="border-color:var(--accent-amber)">
+              <span class="coa-metric-label">ESCALATION RISK</span>
+              <span class="coa-metric-value" style="color:var(--accent-amber)">MED-LOW</span>
+            </div>
+          </div>
+          <div style="font-family:Share Tech Mono,monospace;font-size:8px;color:var(--text-muted);margin-bottom:4px">RISK LEVEL</div>
+          <div class="coa-risk-bar"><div class="coa-risk-fill" style="width:40%;background:var(--accent-amber)"></div></div>
+          <ul class="phase-list">
+            <li class="phase-item"><div class="phase-num">1</div>D-7: SOF insertion; target designation, HUMINT</li>
+            <li class="phase-item"><div class="phase-num">2</div>D-1: CYBERCOM deploys against IRGC C2 & missile net</li>
+            <li class="phase-item"><div class="phase-num">3</div>D-Day: 60x JASSM-ER strikes; nuclear sites + missile storage</li>
+            <li class="phase-item"><div class="phase-num">4</div>D+2: Layered TMD intercepts Iran retaliation salvo</li>
+            <li class="phase-item"><div class="phase-num">5</div>D+5: F-35 SEAD; additional precision strikes per BDA</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- COA Recommendation -->
+      <div class="scenario-card full-width" style="background:var(--bg-card);border:1px solid var(--border-primary);padding:14px;margin-top:4px">
+        <div class="chart-title" style="margin-bottom:8px">AI RECOMMENDATION — COA ASSESSMENT</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+          <div>
+            <div style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--accent-amber);margin-bottom:6px;letter-spacing:2px">RECOMMENDED: COA-3</div>
+            <div style="font-family:Rajdhani,sans-serif;font-size:12px;color:var(--text-secondary);line-height:1.6">
+              COA-3 (Hybrid) delivers the highest win probability (82%) with the lowest US casualty exposure. The cyber-kinetic sequencing denies Iran early warning, degrading the missile threat before kinetic phase commences. TMD layering absorbs residual retaliation. Preserves US escalation dominance and political flexibility.
+            </div>
+          </div>
+          <div>
+            <div style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--accent-red);margin-bottom:6px;letter-spacing:2px">KEY RISK: PROXY ESCALATION</div>
+            <div style="font-family:Rajdhani,sans-serif;font-size:12px;color:var(--text-secondary);line-height:1.6">
+              Hezbollah (~150,000 rockets), Houthi maritime harassment, and Kata'ib Hezbollah IED campaigns can expand the theater significantly. Multi-front activation shifts win probability from 82% → 54%. Proxy suppression operations must run concurrent with main effort.
+            </div>
+          </div>
+          <div>
+            <div style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--accent-cyan);margin-bottom:6px;letter-spacing:2px">CENTRE OF GRAVITY ANALYSIS</div>
+            <div style="font-family:Rajdhani,sans-serif;font-size:12px;color:var(--text-secondary);line-height:1.6">
+              Iran CoG: IRGC missile force + regime legitimacy. US CoG: Air superiority + allied basing access. Critical Vulnerability (Iran): degraded IADS post-2019; F-14 airframe fatigue. Critical Vulnerability (US): Hormuz chokepoint exposure; limited deep-strike tanker support.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOGISTICS VIEW -->
+    <div id="logistics-view" class="tab-view">
+      <div class="logistics-card full-width">
+        <div class="chart-title">LOGISTICS & SUSTAINMENT OVERVIEW — D+0 TO D+30</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:8px">
+          <div style="text-align:center;padding:10px;background:var(--bg-secondary);border:1px solid var(--border-primary)">
+            <div style="font-family:Orbitron,sans-serif;font-size:20px;font-weight:700;color:var(--accent-amber)">68%</div>
+            <div style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px">FUEL RESERVE</div>
+          </div>
+          <div style="text-align:center;padding:10px;background:var(--bg-secondary);border:1px solid var(--border-primary)">
+            <div style="font-family:Orbitron,sans-serif;font-size:20px;font-weight:700;color:var(--accent-red)">41%</div>
+            <div style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px">PGM STOCK</div>
+          </div>
+          <div style="text-align:center;padding:10px;background:var(--bg-secondary);border:1px solid var(--border-primary)">
+            <div style="font-family:Orbitron,sans-serif;font-size:20px;font-weight:700;color:var(--accent-green)">84%</div>
+            <div style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px">FOOD/WATER</div>
+          </div>
+          <div style="text-align:center;padding:10px;background:var(--bg-secondary);border:1px solid var(--border-primary)">
+            <div style="font-family:Orbitron,sans-serif;font-size:20px;font-weight:700;color:var(--accent-amber)">57%</div>
+            <div style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px">SPARES/PARTS</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="logistics-card">
+        <div class="chart-title">FUEL CONSUMPTION (US FORCES)</div>
+        <div class="supply-item">
+          <div class="supply-header"><span class="supply-name">JP-8 Aviation Fuel</span><span class="supply-val">68% / 4.2M gal/day</span></div>
+          <div class="supply-bar-bg"><div class="supply-bar-fill" style="width:68%;background:var(--accent-amber)"></div></div>
+        </div>
+        <div class="supply-item">
+          <div class="supply-header"><span class="supply-name">Naval Diesel F-76</span><span class="supply-val">74% / 1.8M gal/day</span></div>
+          <div class="supply-bar-bg"><div class="supply-bar-fill" style="width:74%;background:var(--accent-blue)"></div></div>
+        </div>
+        <div class="supply-item">
+          <div class="supply-header"><span class="supply-name">MOGAS Ground Vehicles</span><span class="supply-val">82% / 280k gal/day</span></div>
+          <div class="supply-bar-bg"><div class="supply-bar-fill" style="width:82%;background:var(--accent-green)"></div></div>
+        </div>
+        <div class="supply-item">
+          <div class="supply-header"><span class="supply-name">Nuclear Ship Fuel (CVN)</span><span class="supply-val">UNLIMITED (20yr core)</span></div>
+          <div class="supply-bar-bg"><div class="supply-bar-fill" style="width:100%;background:var(--accent-cyan)"></div></div>
+        </div>
+      </div>
+
+      <div class="logistics-card">
+        <div class="chart-title">MUNITIONS INVENTORY</div>
+        <div class="supply-item">
+          <div class="supply-header"><span class="supply-name">TLAM/JASSM-ER</span><span class="supply-val">41% remaining</span></div>
+          <div class="supply-bar-bg"><div class="supply-bar-fill" style="width:41%;background:var(--accent-red)"></div></div>
+        </div>
+        <div class="supply-item">
+          <div class="supply-header"><span class="supply-name">GBU-57 MOP</span><span class="supply-val">60% remaining</span></div>
+          <div class="supply-bar-bg"><div class="supply-bar-fill" style="width:60%;background:var(--accent-amber)"></div></div>
+        </div>
+        <div class="supply-item">
+          <div class="supply-header"><span class="supply-name">SM-6 / PAC-3 MSE</span><span class="supply-val">55% remaining</span></div>
+          <div class="supply-bar-bg"><div class="supply-bar-fill" style="width:55%;background:var(--accent-amber)"></div></div>
+        </div>
+        <div class="supply-item">
+          <div class="supply-header"><span class="supply-name">AIM-120D / AIM-9X</span><span class="supply-val">72% remaining</span></div>
+          <div class="supply-bar-bg"><div class="supply-bar-fill" style="width:72%;background:var(--accent-green)"></div></div>
+        </div>
+      </div>
+
+      <div class="logistics-card">
+        <div class="chart-title">SUPPLY CHAIN STATUS</div>
+        <div class="supply-item">
+          <div class="supply-header"><span class="supply-name">Diego Garcia → Theater</span><span class="supply-val">OPERATIONAL</span></div>
+          <div class="supply-bar-bg"><div class="supply-bar-fill" style="width:90%;background:var(--accent-green)"></div></div>
+        </div>
+        <div class="supply-item">
+          <div class="supply-header"><span class="supply-name">Ramstein Pre-Position</span><span class="supply-val">RESTRICTED</span></div>
+          <div class="supply-bar-bg"><div class="supply-bar-fill" style="width:45%;background:var(--accent-amber)"></div></div>
+        </div>
+        <div class="supply-item">
+          <div class="supply-header"><span class="supply-name">Hormuz Strait LOC</span><span class="supply-val">CONTESTED</span></div>
+          <div class="supply-bar-bg"><div class="supply-bar-fill" style="width:20%;background:var(--accent-red)"></div></div>
+        </div>
+        <div class="supply-item">
+          <div class="supply-header"><span class="supply-name">CASA Air Resupply</span><span class="supply-val">NOMINAL</span></div>
+          <div class="supply-bar-bg"><div class="supply-bar-fill" style="width:88%;background:var(--accent-green)"></div></div>
+        </div>
+      </div>
+
+      <div class="logistics-card">
+        <div class="chart-title">OPERATIONAL ENDURANCE</div>
+        <div class="result-row"><span class="result-label">CURRENT OP RATE</span><span class="result-value" style="color:var(--accent-amber)">180 sorties/day</span></div>
+        <div class="result-row"><span class="result-label">SUSTAINABLE RATE</span><span class="result-value" style="color:var(--accent-green)">240 sorties/day</span></div>
+        <div class="result-row"><span class="result-label">MUNITIONS LIMIT (PGM)</span><span class="result-value" style="color:var(--accent-red)">D+18 (critical)</span></div>
+        <div class="result-row"><span class="result-label">TMD INTERCEPT CAP</span><span class="result-value" style="color:var(--accent-amber)">~180 missiles total</span></div>
+        <div class="result-row"><span class="result-label">CAMPAIGN ENDURANCE</span><span class="result-value" style="color:var(--accent-cyan)">~45 days (full scale)</span></div>
+      </div>
+
+      <div class="logistics-card">
+        <div class="chart-title">IRAN SUSTAINMENT POSTURE</div>
+        <div class="supply-item">
+          <div class="supply-header"><span class="supply-name">Missile Pre-Deploy Stock</span><span class="supply-val">DEGRADING</span></div>
+          <div class="supply-bar-bg"><div class="supply-bar-fill" style="width:65%;background:var(--iran-color)"></div></div>
+        </div>
+        <div class="supply-item">
+          <div class="supply-header"><span class="supply-name">Aviation Fuel Reserves</span><span class="supply-val">LOW (sanctions)</span></div>
+          <div class="supply-bar-bg"><div class="supply-bar-fill" style="width:30%;background:var(--accent-red)"></div></div>
+        </div>
+        <div class="supply-item">
+          <div class="supply-header"><span class="supply-name">Spare Parts (Aircraft)</span><span class="supply-val">CRITICAL</span></div>
+          <div class="supply-bar-bg"><div class="supply-bar-fill" style="width:15%;background:var(--accent-red)"></div></div>
+        </div>
+        <div class="supply-item">
+          <div class="supply-header"><span class="supply-name">Underground Hardening</span><span class="supply-val">SIGNIFICANT</span></div>
+          <div class="supply-bar-bg"><div class="supply-bar-fill" style="width:80%;background:var(--accent-amber)"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AAR VIEW -->
+    <div id="aar-view" class="tab-view">
+      <div class="aar-controls">
+        <button class="playback-btn" title="Rewind">⏮</button>
+        <button class="playback-btn" title="Step Back">◀</button>
+        <button class="playback-btn active" id="play-btn" onclick="togglePlayback(this)" title="Play/Pause">▶</button>
+        <button class="playback-btn" title="Step Forward">▶|</button>
+        <button class="playback-btn" title="Fast Forward">⏭</button>
+        <div class="playback-timeline">
+          <div class="playback-progress" id="aar-progress"></div>
+          <div class="playback-head" id="aar-head"></div>
+        </div>
+        <span class="playback-time" id="aar-time">D+0 / H+00:00</span>
+        <select class="form-select" style="width:120px" id="aar-speed">
+          <option>1x Speed</option>
+          <option>2x Speed</option>
+          <option>4x Speed</option>
+          <option>0.5x Speed</option>
+        </select>
+      </div>
+
+      <div class="timeline" id="aar-timeline">
+
+        <div class="timeline-event neutral">
+          <div class="event-time">D-7 / H-HOUR MINUS 168HRS — INTEL PHASE</div>
+          <div class="event-title">OSINT/SIGINT: Iranian IRGC Missile Dispersal Detected</div>
+          <div class="event-desc">NSA/NRO satellite imagery confirms dispersal of Shahab-3 and Sejjil-2 MRBM launchers from garrisons to pre-surveyed launch sites across western Iran. IRGC C2 communications spike 340% above baseline. DIA assesses high-confidence 72-hour warning.</div>
+          <div class="event-impact">📋 DECISION POINT: POTUS authorizes DEFCON 3. CENTCOM activates OPORD 5050-DELTA.</div>
+        </div>
+
+        <div class="timeline-event positive">
+          <div class="event-time">D-3 / H-72 — FORCE DEPLOYMENT</div>
+          <div class="event-title">USS Theodore Roosevelt CSG Crosses Hormuz — BTF Assembled</div>
+          <div class="event-desc">Battle Task Force (BTF) including CVN-71, 2x DDG, 2x CG, 1x SSN achieves position in northern Arabian Sea. B-52H bombers depart Barksdale for Diego Garcia. F-22A squadron deploys to Al Dhafra, UAE. THAAD Battery 4 activated Qatar.</div>
+          <div class="event-impact">✅ POSITIVE: Force package 94% assembled ahead of schedule. IRGCN patrol activity elevated.</div>
+        </div>
+
+        <div class="timeline-event critical">
+          <div class="event-time">D+0 / H+00:00 — EXECUTION</div>
+          <div class="event-title">OPERATION IRON MERIDIAN — H-HOUR STRIKE PACKAGE LAUNCHED</div>
+          <div class="event-desc">200x TLAM Block V launched from Virginia-class SSNs and Ticonderoga-class cruisers. 60x JASSM-ER released from B-52H and B-1B bombers. Simultaneous CYBERCOM offensive operations activate against Iranian IADS radar network. F-35C electronic attack aircraft initiate SEAD operations. Strategic surprise achieved.</div>
+          <div class="event-impact">🚨 CRITICAL: 14 TLAMs intercepted by Iranian HQ-9 batteries. 3 B-1B sorties turned back by SA-20 at Kharg Island. 88% first-wave penetration rate.</div>
+        </div>
+
+        <div class="timeline-event critical">
+          <div class="event-time">D+0 / H+04:30 — IRANIAN RETALIATION</div>
+          <div class="event-title">IRAN LAUNCHES 82-MISSILE SALVO — HORMUZ MINING BEGINS</div>
+          <div class="event-desc">IRGCN initiates Strait mining operation using fast boats. Simultaneous launch of 82 ballistic missiles targeting Al Udeid, Al Dhafra, and USS Roosevelt. THAAD and Patriot PAC-3 MSE engaged. 68 of 82 missiles intercepted. 14 impacts: 3 aircraft destroyed Al Dhafra, fuel depot Al Udeid hit. Significant runway damage.</div>
+          <div class="event-impact">🚨 CRITICAL LOSS: 3x F-22A destroyed on ground. 24 US personnel KIA. AEGIS shooter USS Lake Erie expended 60% PAC-3 loadout.</div>
+        </div>
+
+        <div class="timeline-event positive">
+          <div class="event-time">D+2 / H+48 — AIR SUPERIORITY</div>
+          <div class="event-title">IRIAN IADS COLLAPSED — AIR SUPERIORITY ACHIEVED</div>
+          <div class="event-desc">Combination of TLAM strikes and CYBERCOM operations has degraded 74% of Iranian integrated air defence network. F-22A and F-35C establish combat air patrol over Tehran approach corridors. IRIAF F-14 and MiG-29 sorties attempted; 8 aircraft downed in BVR engagements. Remaining IRIAF largely grounded.</div>
+          <div class="event-impact">✅ MILESTONE: Air superiority established D+2. 14 days ahead of worst-case planning scenario.</div>
+        </div>
+
+        <div class="timeline-event positive">
+          <div class="event-time">D+4 / H+96 — NUCLEAR OBJECTIVES</div>
+          <div class="event-title">B-2 STRIKES FORDOW AND NATANZ — BDA ANALYSIS</div>
+          <div class="event-desc">Two B-2A Spirit bombers penetrate Iranian airspace and deliver 4x GBU-57 Massive Ordnance Penetrators against Fordow enrichment facility (buried 80m). Natanz struck with JASSM-ER. BDA indicates structural collapse at Fordow. Natanz centrifuge halls severely damaged. Radiation monitoring shows no release. 8-10 year setback assessed to nuclear programme.</div>
+          <div class="event-impact">✅ PRIMARY OBJECTIVE ACHIEVED: Nuclear infrastructure degraded to near-zero operational capacity.</div>
+        </div>
+
+        <div class="timeline-event neutral">
+          <div class="event-time">D+8 / H+192 — PROXY ACTIVATION</div>
+          <div class="event-title">HEZBOLLAH ROCKET CAMPAIGN INITIATED — HOUTHI MARITIME ATTACK</div>
+          <div class="event-desc">Hezbollah launches 800-rocket salvo against northern Israel, opening second front. Houthi forces strike commercial shipping with anti-ship missiles in southern Red Sea — 2 vessels hit. Iran-backed militias in Iraq mortar Al Asad Air Base. Theater expansion confirmed. Israel engages Iron Dome; 4 civilian casualties Tel Aviv.</div>
+          <div class="event-impact">⚠️ COMPLICATION: Multi-front activation strains US resource prioritization. Win probability reduced 76% → 61%.</div>
+        </div>
+
+      </div>
+
+      <div style="margin-top:20px">
+        <div class="chart-title" style="margin-bottom:12px">LESSONS LEARNED — AFTER ACTION</div>
+        <div class="lesson-card">
+          <div class="lesson-title">L1: TMD Inventory is the Strategic Constraint</div>
+          <div class="lesson-text">The 82-missile Iranian salvo consumed 60% of forward-deployed PAC-3 interceptors in a single engagement. With Iran's estimated 3,000+ missile inventory, the campaign TMD shortfall is existential. Investment priority: NEXT-GEN INTERCEPTOR and forward pre-positioned SM-6 stocks. Consider directed energy supplements.</div>
+        </div>
+        <div class="lesson-card">
+          <div class="lesson-title">L2: Hormuz Mining Was Underplanned</div>
+          <div class="lesson-text">IRGCN mine-laying began simultaneously with H-Hour, suggesting pre-positioned assets outside our ISR coverage. MCM assets were not forward-staged. 12 commercial vessels struck within 48 hours. Lessons: persistent MH-60S MCM helicopter detachments must be pre-deployed with CSG; LCS MCM mission module to theater at D-14.</div>
+        </div>
+        <div class="lesson-card">
+          <div class="lesson-title">L3: Proxy Networks Require Independent Suppression Operations</div>
+          <div class="lesson-text">The assumption that kinetic degradation of IRGC HQ would interrupt Hezbollah and Houthi activation proved incorrect. These networks operated with full autonomy under pre-established execution orders. Recommendation: simultaneous Phase 0 operations against Hezbollah C2 and Houthi missile assets prior to main effort.</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end center panel -->
+
+  <!-- RIGHT PANEL: INTEL & METRICS -->
+  <div id="right-panel">
+    <div class="panel-header">
+      <span class="panel-title">INTEL FEED</span>
+      <span class="panel-badge" style="color:var(--accent-red);border-color:rgba(255,51,85,0.3)">FLASH</span>
+    </div>
+
+    <div class="intel-feed" id="intel-feed">
+      <!-- Populated by JS -->
+    </div>
+
+    <div class="panel-header" style="border-top:1px solid var(--border-primary)">
+      <span class="panel-title">DOMAIN SUPERIORITY</span>
+    </div>
+
+    <div class="sector-bars">
+      <div class="sector-row">
+        <span class="sector-label">AIR</span>
+        <div class="sector-bar-bg">
+          <div class="sector-midline"></div>
+          <div class="sector-bar-us" id="bar-air-us" style="width:68%"></div>
+          <div class="sector-bar-iran" id="bar-air-iran" style="width:18%"></div>
+        </div>
+      </div>
+      <div class="sector-row">
+        <span class="sector-label">SEA</span>
+        <div class="sector-bar-bg">
+          <div class="sector-midline"></div>
+          <div class="sector-bar-us" style="width:75%"></div>
+          <div class="sector-bar-iran" style="width:22%"></div>
+        </div>
+      </div>
+      <div class="sector-row">
+        <span class="sector-label">LAND</span>
+        <div class="sector-bar-bg">
+          <div class="sector-midline"></div>
+          <div class="sector-bar-us" style="width:35%"></div>
+          <div class="sector-bar-iran" style="width:58%"></div>
+        </div>
+      </div>
+      <div class="sector-row">
+        <span class="sector-label">CYBER</span>
+        <div class="sector-bar-bg">
+          <div class="sector-midline"></div>
+          <div class="sector-bar-us" style="width:72%"></div>
+          <div class="sector-bar-iran" style="width:25%"></div>
+        </div>
+      </div>
+      <div class="sector-row">
+        <span class="sector-label">SPACE</span>
+        <div class="sector-bar-bg">
+          <div class="sector-midline"></div>
+          <div class="sector-bar-us" style="width:82%"></div>
+          <div class="sector-bar-iran" style="width:10%"></div>
+        </div>
+      </div>
+      <div class="sector-row">
+        <span class="sector-label">MISSILE</span>
+        <div class="sector-bar-bg">
+          <div class="sector-midline"></div>
+          <div class="sector-bar-us" style="width:45%"></div>
+          <div class="sector-bar-iran" style="width:48%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="metrics-grid">
+      <div class="metric-cell">
+        <div class="metric-cell-label">SIM RUNS</div>
+        <div class="metric-cell-val" style="color:var(--accent-cyan)" id="sim-runs">1,000</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-cell-label">VARIANCE</div>
+        <div class="metric-cell-val" style="color:var(--accent-amber)">±15%</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-cell-label">DAY (SIM)</div>
+        <div class="metric-cell-val" style="color:var(--accent-amber)" id="sim-day">D+0</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-cell-label">ESCALATION</div>
+        <div class="metric-cell-val" style="color:var(--accent-orange)">12%</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end app -->
+
+<!-- ALERT TICKER -->
+<div id="alert-bar">
+  <div class="alert-ticker">
+    <span class="alert-item critical">⬛ FLASH — IRGCN FAST BOAT SWARM DETECTED GRID 2847N-5613E</span>
+    <span class="alert-sep">◆</span>
+    <span class="alert-item warning">⬛ HIGH — 14 BALLISTIC MISSILES IN FLIGHT FROM ISFAHAN PROVINCE</span>
+    <span class="alert-sep">◆</span>
+    <span class="alert-item">⬛ ROUTINE — B-52H STRIKE PACKAGE CHARLIE AIRBORNE DIEGO GARCIA</span>
+    <span class="alert-sep">◆</span>
+    <span class="alert-item warning">⬛ HIGH — STRAIT OF HORMUZ PARTIAL CLOSURE ASSESSED BY NRO</span>
+    <span class="alert-sep">◆</span>
+    <span class="alert-item">⬛ ROUTINE — USS LAKE ERIE SM-6 INTERCEPT SUCCESSFUL OVER GULF OF OMAN</span>
+    <span class="alert-sep">◆</span>
+    <span class="alert-item critical">⬛ FLASH — HEZBOLLAH ACTIVATES KATYUSHA POSITIONS SOUTHERN LEBANON</span>
+    <span class="alert-sep">◆</span>
+    <span class="alert-item warning">⬛ HIGH — CYBERCOM REPORTS IRANIAN SCADA ATTACK BAHRAIN UTILITY GRID</span>
+    <span class="alert-sep">◆</span>
+    <span class="alert-item">⬛ ROUTINE — THAAD INTERCEPT BATTERY CONFIRMS READINESS 96%</span>
+    <span class="alert-sep">◆</span>
+    <span class="alert-item critical">⬛ FLASH — NRO: FORDOW FACILITY STRUCTURAL COLLAPSE CONFIRMED BDA</span>
+    <span class="alert-sep">◆</span>
+    <span class="alert-item warning">⬛ HIGH — PERSIAN GULF OIL FUTURES UP 340% — ECONOMIC WAR INITIATED</span>
+    <span class="alert-sep">◆</span>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// DATA: FORCE STRUCTURE — US CENTCOM
+// ══════════════════════════════════════════
+const forceData = {
+  us: {
+    army: [
+      { name: '1st Armor Div (-)' , str: '8,400', readiness: 92, fp: 9.2, mob: 'H', range: 'T', surv: 88 },
+      { name: '82nd Airborne BDE', str: '3,200', readiness: 98, fp: 7.1, mob: 'VH', range: 'T', surv: 72 },
+      { name: 'HIMARS BN x3',      str: '620',   readiness: 96, fp: 9.6, mob: 'H', range: 'S', surv: 78 },
+      { name: 'THAAD Battery x2',  str: '280',   readiness: 95, fp: 8.8, mob: 'M', range: 'S', surv: 82 },
+      { name: 'Patriot PAC-3 x4',  str: '440',   readiness: 88, fp: 8.4, mob: 'L', range: 'M', surv: 80 },
+    ],
+    navy: [
+      { name: 'CSG-12 (Roosevelt)', str: '7,500', readiness: 94, fp: 9.8, mob: 'M', range: 'G', surv: 85 },
+      { name: 'CSG-8 (Eisenhower)', str: '7,500', readiness: 89, fp: 9.7, mob: 'M', range: 'G', surv: 84 },
+      { name: 'DESRON-26 (5xDDG)', str: '1,800', readiness: 91, fp: 9.1, mob: 'VH', range: 'S', surv: 76 },
+      { name: 'SSN x4 (Virginia)', str: '640',   readiness: 97, fp: 9.5, mob: 'VH', range: 'G', surv: 94 },
+      { name: 'ARG/MEU 15th',       str: '2,200', readiness: 85, fp: 7.8, mob: 'H', range: 'T', surv: 70 },
+    ],
+    airforce: [
+      { name: 'F-22A x24 (1st FW)', str: '24 AC', readiness: 88, fp: 9.9, mob: 'VH', range: 'T', surv: 92 },
+      { name: 'F-35A x36 (388FW)', str: '36 AC', readiness: 92, fp: 9.6, mob: 'H', range: 'T', surv: 90 },
+      { name: 'F-35C x48 (CVN)',    str: '48 AC', readiness: 90, fp: 9.4, mob: 'H', range: 'T', surv: 88 },
+      { name: 'B-2A Spirit x6',     str: '6 AC',  readiness: 82, fp: 10.0, mob: 'M', range: 'I', surv: 87 },
+      { name: 'B-52H x6 (DG)',      str: '6 AC',  readiness: 94, fp: 9.2, mob: 'M', range: 'I', surv: 65 },
+      { name: 'EA-18G x12',         str: '12 AC', readiness: 91, fp: 7.5, mob: 'H', range: 'T', surv: 82 },
+      { name: 'E-3G AWACS x3',      str: '3 AC',  readiness: 86, fp: 5.0, mob: 'M', range: 'T', surv: 55 },
+      { name: 'KC-46 x18',          str: '18 AC', readiness: 88, fp: 2.0, mob: 'M', range: 'I', surv: 48 },
+    ],
+    strategic: [
+      { name: 'TLAM Block V (1200)', str: '1,200', readiness: 99, fp: 9.0, mob: 'N', range: 'I', surv: 72 },
+      { name: 'JASSM-ER (600)',      str: '600',   readiness: 99, fp: 9.3, mob: 'N', range: 'I', surv: 78 },
+      { name: 'GBU-57 MOP x20',     str: '20',    readiness: 100, fp: 10.0, mob: 'N', range: 'T', surv: 85 },
+      { name: 'CYBERCOM TEAMS x8',  str: 'OPCON', readiness: 95, fp: 8.5, mob: 'N', range: 'G', surv: 99 },
+    ]
+  },
+  iran: {
+    army: [
+      { name: 'IRGC Ground Forces', str: '120,000', readiness: 74, fp: 6.8, mob: 'M', range: 'T', surv: 62 },
+      { name: '55th Airborne BDE',  str: '4,200',   readiness: 68, fp: 6.4, mob: 'H', range: 'T', surv: 58 },
+      { name: 'T-72S Armour Bde',   str: '2,400',   readiness: 65, fp: 7.1, mob: 'M', range: 'T', surv: 55 },
+      { name: 'Artillery Div (-))',  str: '3,800',   readiness: 71, fp: 7.8, mob: 'L', range: 'M', surv: 60 },
+    ],
+    navy: [
+      { name: 'IRGCN Fast Boats 80+', str: '3,200', readiness: 84, fp: 5.8, mob: 'VH', range: 'L', surv: 40 },
+      { name: 'Kilo-class SSK x3',    str: '180',   readiness: 62, fp: 7.2, mob: 'M', range: 'T', surv: 70 },
+      { name: 'Frigate Damavand',     str: '420',   readiness: 72, fp: 6.5, mob: 'H', range: 'T', surv: 55 },
+      { name: 'Mine Warfare Vessels', str: '1,200', readiness: 80, fp: 7.8, mob: 'M', range: 'T', surv: 45 },
+    ],
+    airforce: [
+      { name: 'F-14A Tomcat x24',   str: '24 AC', readiness: 48, fp: 7.8, mob: 'H', range: 'T', surv: 52 },
+      { name: 'MiG-29 x30',         str: '30 AC', readiness: 55, fp: 7.2, mob: 'H', range: 'T', surv: 50 },
+      { name: 'Su-24 Strike x30',   str: '30 AC', readiness: 52, fp: 7.5, mob: 'M', range: 'T', surv: 48 },
+      { name: 'F-4E Phantom x40',   str: '40 AC', readiness: 42, fp: 6.0, mob: 'M', range: 'T', surv: 45 },
+      { name: 'IRGC UAV Swarm',     str: '1,500+', readiness: 85, fp: 6.8, mob: 'H', range: 'T', surv: 38 },
+    ],
+    strategic: [
+      { name: 'Shahab-3 MRBM x100', str: '100', readiness: 80, fp: 8.5, mob: 'M', range: 'T', surv: 55 },
+      { name: 'Sejjil-2 MRBM x40',  str: '40',  readiness: 76, fp: 9.0, mob: 'M', range: 'T', surv: 58 },
+      { name: 'Emad (MRBM) x50',    str: '50',  readiness: 72, fp: 8.4, mob: 'M', range: 'T', surv: 52 },
+      { name: 'Fateh-110 SRBM x400',str: '400', readiness: 85, fp: 7.0, mob: 'H', range: 'S', surv: 48 },
+      { name: 'Shahed-136 UAV',     str: '2,000', readiness: 90, fp: 5.5, mob: 'H', range: 'T', surv: 32 },
+    ]
+  }
+};
+
+// Intel feed data
+const intelItems = [
+  { time: 'Z 1423', text: '<span class="intel-priority prio-flash">FLASH</span><strong>IRGC MISSILE DISPERSAL:</strong> Shahab-3 TELs detected moving to launch sites grid 3312N-4820E. Estimated 80+ launchers active.', type:'flash' },
+  { time: 'Z 1401', text: '<span class="intel-priority prio-high">HIGH</span><strong>HORMUZ MINING:</strong> IRGCN vessels laying moored contact mines. 4 lanes partially blocked. Commercial shipping halted.', type:'high' },
+  { time: 'Z 1347', text: '<span class="intel-priority prio-flash">FLASH</span><strong>BDA CONFIRMED:</strong> Fordow enrichment facility collapsed. Natanz centrifuge hall B severely damaged. Radiation clear.', type:'flash' },
+  { time: 'Z 1312', text: '<span class="intel-priority prio-high">HIGH</span><strong>HEZBOLLAH:</strong> 800+ rockets staged at 24 sites in southern Lebanon. Activation order likely within 48hrs.', type:'high' },
+  { time: 'Z 1258', text: '<span class="intel-priority prio-low">INFO</span>USS Lake Erie reports successful SM-6 intercept of 2x Emad BMs over Gulf of Oman.', type:'low' },
+  { time: 'Z 1240', text: '<span class="intel-priority prio-high">HIGH</span><strong>CYBER:</strong> Iranian threat actors (APT33) targeting Bahrain electrical grid SCADA. No disruption yet.', type:'high' },
+  { time: 'Z 1218', text: '<span class="intel-priority prio-low">INFO</span>B-52H Strike Package CHARLIE airborne from Diego Garcia. ETA to launch box: 6h45m.', type:'low' },
+  { time: 'Z 1155', text: '<span class="intel-priority prio-flash">FLASH</span><strong>OIL MARKET:</strong> Brent crude +340% in 24hrs. Saudi Arabia mobilizing reserves. Global economic warning in effect.', type:'flash' },
+  { time: 'Z 1132', text: '<span class="intel-priority prio-high">HIGH</span>Kilo-class SSK unaccounted for — last tracked Persian Gulf 18hrs ago. Alert condition SUBSURFACE ALPHA.', type:'high' },
+  { time: 'Z 1110', text: '<span class="intel-priority prio-low">INFO</span>THAAD Battery 4 Al Udeid: 96% readiness. 24 interceptors available. Fire control nominal.', type:'low' },
+  { time: 'Z 1048', text: '<span class="intel-priority prio-high">HIGH</span><strong>IRGCN SWARM:</strong> 40+ fast boats in Strait approaches. Coordinated harassment posture. Rules of engagement confirmed.', type:'high' },
+  { time: 'Z 1030', text: '<span class="intel-priority prio-flash">FLASH</span>IRIAF F-14 intercept attempted against E-3G AWACS track — 4 F-22A engaged, 2 F-14 downed. No US losses.', type:'flash' },
+];
+
+// ══════════════════════════════════════════
+// INIT FUNCTIONS
+// ══════════════════════════════════════════
+let currentSide = 'us';
+let simRunning = false;
+let aarPlaying = false;
+
+function init() {
+  updateClock();
+  setInterval(updateClock, 1000);
+  renderForcePanel('us');
+  renderIntelFeed();
+  drawAttritionChart();
+  drawMunitionsChart();
+}
+
+function updateClock() {
+  const now = new Date();
+  const z = now.toUTCString().match(/(\d{2}:\d{2}:\d{2})/)[1];
+  document.getElementById('clock').textContent = z + ' Z';
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(tab + '-view').classList.add('active');
+  event.target.classList.add('active');
+}
+
+function selectSide(side, el) {
+  currentSide = side;
+  document.querySelectorAll('.side-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderForcePanel(side);
+}
+
+function renderForcePanel(side) {
+  const data = forceData[side];
+  const panel = document.getElementById('force-panel');
+  const domains = ['army','navy','airforce','strategic'];
+  const domainLabels = { army:'GROUND FORCES', navy:'NAVAL FORCES', airforce:'AIR FORCES', strategic:'STRATEGIC ASSETS' };
+
+  panel.innerHTML = domains.map(domain => `
+    <div class="force-domain">
+      <div class="domain-header" onclick="toggleDomainPanel(this)">
+        ${domainLabels[domain]}
+        <span style="font-size:10px;color:var(--text-muted)">[${data[domain].length}]</span>
+      </div>
+      <div class="domain-content">
+        ${data[domain].map(unit => `
+          <div class="unit-row">
+            <div>
+              <div class="unit-name">${unit.name}</div>
+              <div class="readiness-bar">
+                <div class="readiness-fill ${unit.readiness>=80?'readiness-high':unit.readiness>=60?'readiness-med':'readiness-low'}" style="width:${unit.readiness}%"></div>
+              </div>
+              <div class="mini-stats">
+                <span class="mini-stat">RDY:<span>${unit.readiness}%</span></span>
+                <span class="mini-stat" style="margin-left:4px">FP:<span>${unit.fp}</span></span>
+                <span class="mini-stat" style="margin-left:4px">MOB:<span>${unit.mob}</span></span>
+              </div>
+            </div>
+            <div class="unit-strength">${unit.str}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleDomainPanel(header) {
+  const content = header.nextElementSibling;
+  content.style.display = content.style.display === 'none' ? '' : 'none';
+}
+
+function renderIntelFeed() {
+  const feed = document.getElementById('intel-feed');
+  feed.innerHTML = intelItems.map(item => `
+    <div class="intel-item">
+      <div class="intel-time">${item.time}</div>
+      <div class="intel-text">${item.text}</div>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════
+// SIMULATION ENGINE
+// ══════════════════════════════════════════
+function runSimulation() {
+  if (simRunning) return;
+  simRunning = true;
+  document.getElementById('sim-status').textContent = 'RUNNING';
+  document.getElementById('sim-status').style.color = 'var(--accent-amber)';
+
+  const phases = ['ph1','ph2','ph3','ph4','ph5','ph6'];
+  let i = 0;
+
+  function nextPhase() {
+    if (i > 0) document.getElementById(phases[i-1]).classList.remove('active');
+    if (i < phases.length) {
+      document.getElementById(phases[i]).classList.add('active');
+      i++;
+      setTimeout(nextPhase, 600 + Math.random()*400);
+    } else {
+      // Complete
+      phases.forEach(p => {
+        const el = document.getElementById(p);
+        el.classList.remove('active');
+        el.classList.add('complete');
+      });
+      updateResults();
+      document.getElementById('sim-status').textContent = 'COMPLETE';
+      document.getElementById('sim-status').style.color = 'var(--accent-green)';
+      simRunning = false;
+    }
+  }
+
+  nextPhase();
+}
+
+function updateResults() {
+  // Stochastic variation
+  const v = (parseFloat(document.getElementById('variance-slider').value) || 15) / 100;
+  const rng = () => 1 + (Math.random() - 0.5) * v;
+
+  const usWin = Math.min(99, Math.max(40, Math.round(76 * rng())));
+  const iranWin = Math.min(40, Math.max(5, Math.round(16 * rng())));
+
+  document.getElementById('us-prob').textContent = usWin + '%';
+  document.getElementById('iran-prob').textContent = iranWin + '%';
+  document.getElementById('win-prob').textContent = usWin + '%';
+
+  // Add new scenario to comparison table
+  const tbody = document.getElementById('scenario-table-body');
+  const tr = document.createElement('tr');
+  const opening = document.getElementById('opening-move').value.substring(0,22) + '...';
+  tr.innerHTML = `
+    <td class="td-highlight" style="color:var(--accent-cyan)">NEW RUN #${Date.now()%100}</td>
+    <td>${opening}</td>
+    <td class="${usWin>=70?'td-good':usWin>=55?'td-highlight':'td-bad'}">${usWin}%</td>
+    <td>~${Math.round(500*rng())}</td>
+    <td>~${Math.round(13000*rng()).toLocaleString()}</td>
+    <td class="td-highlight">${Math.round(28*rng())}–${Math.round(45*rng())}d</td>
+    <td>Contested</td>
+    <td class="${Math.random()>0.7?'td-bad':'td-highlight'}">${Math.round(12*rng())}%</td>
+  `;
+  tbody.insertBefore(tr, tbody.firstChild);
+}
+
+function updateVariance(val) {
+  document.getElementById('variance-label').textContent = '±' + val + '%';
+}
+
+// ══════════════════════════════════════════
+// CHARTS (Canvas 2D)
+// ══════════════════════════════════════════
+function drawAttritionChart() {
+  const canvas = document.getElementById('attrition-chart');
+  if (!canvas) return;
+  canvas.width = canvas.offsetWidth || 300;
+  canvas.height = canvas.offsetHeight || 140;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  // Lanchester attrition curves (simplified)
+  const days = 30;
+  const usCurve = [], iranCurve = [];
+  let us = 100, iran = 100;
+
+  for (let d = 0; d <= days; d++) {
+    usCurve.push(us);
+    iranCurve.push(iran);
+    const usLoss = (iran * 0.018 + Math.random()*0.5) * (d<7?0.8:1.2);
+    const iranLoss = (us * 0.04 + Math.random()*1.2) * (d<4?1.5:1.0);
+    us = Math.max(0, us - usLoss);
+    iran = Math.max(0, iran - iranLoss);
+  }
+
+  // Grid
+  ctx.strokeStyle = 'rgba(0,168,212,0.1)';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) {
+    const y = H - (i/4)*H;
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+    ctx.fillStyle = 'rgba(110,154,184,0.5)';
+    ctx.font = '9px Share Tech Mono';
+    ctx.fillText(i*25+'%', 2, y-2);
+  }
+
+  // Draw Iran curve
+  ctx.beginPath();
+  ctx.strokeStyle = '#cc3300';
+  ctx.lineWidth = 1.5;
+  iranCurve.forEach((v,i) => {
+    const x = (i/days)*W;
+    const y = H - (v/100)*H;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  // Fill Iran
+  ctx.beginPath();
+  iranCurve.forEach((v,i) => {
+    const x = (i/days)*W;
+    const y = H - (v/100)*H;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath();
+  ctx.fillStyle = 'rgba(204,51,0,0.08)';
+  ctx.fill();
+
+  // Draw US curve
+  ctx.beginPath();
+  ctx.strokeStyle = '#0088ff';
+  ctx.lineWidth = 1.5;
+  usCurve.forEach((v,i) => {
+    const x = (i/days)*W;
+    const y = H - (v/100)*H;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  // Fill US
+  ctx.beginPath();
+  usCurve.forEach((v,i) => {
+    const x = (i/days)*W;
+    const y = H - (v/100)*H;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath();
+  ctx.fillStyle = 'rgba(0,136,255,0.08)';
+  ctx.fill();
+
+  // Labels
+  ctx.fillStyle = '#0088ff';
+  ctx.font = 'bold 10px Rajdhani';
+  ctx.fillText('US FORCES', W*0.75, H*0.2);
+  ctx.fillStyle = '#cc3300';
+  ctx.fillText('IRAN FORCES', W*0.55, H*0.55);
+
+  // Day labels
+  ctx.fillStyle = 'rgba(110,154,184,0.4)';
+  ctx.font = '8px Share Tech Mono';
+  [0,7,14,21,30].forEach(d => {
+    ctx.fillText('D+'+d, (d/30)*W - (d===30?12:0), H-2);
+  });
+}
+
+function drawMunitionsChart() {
+  const canvas = document.getElementById('munitions-chart');
+  if (!canvas) return;
+  canvas.width = canvas.offsetWidth || 300;
+  canvas.height = canvas.offsetHeight || 140;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  const categories = ['TLAM', 'JASSM', 'SM-6', 'AIM-120', 'GBU-57'];
+  const expend = [59, 38, 45, 28, 40];
+  const colors = ['#0088ff','#00ccff','#ff8800','#00ff88','#ff3355'];
+  const bW = W/categories.length - 6;
+
+  ctx.fillStyle = 'rgba(0,168,212,0.1)';
+  ctx.fillRect(0,0,W,H);
+
+  categories.forEach((cat, i) => {
+    const x = i*(bW+6) + 3;
+    const pct = expend[i]/100;
+    const bH = (H-24)*pct;
+    const y = H-24-bH;
+
+    // Background bar
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.fillRect(x, 0, bW, H-24);
+
+    // Fill bar
+    ctx.fillStyle = colors[i];
+    ctx.globalAlpha = 0.8;
+    ctx.fillRect(x, y, bW, bH);
+    ctx.globalAlpha = 1;
+
+    // Label
+    ctx.fillStyle = colors[i];
+    ctx.font = 'bold 9px Share Tech Mono';
+    ctx.textAlign = 'center';
+    ctx.fillText(expend[i]+'%', x+bW/2, y-3);
+    ctx.fillStyle = 'rgba(110,154,184,0.6)';
+    ctx.font = '8px Share Tech Mono';
+    ctx.fillText(cat, x+bW/2, H-8);
+  });
+  ctx.textAlign = 'left';
+}
+
+// ══════════════════════════════════════════
+// UI INTERACTIONS
+// ══════════════════════════════════════════
+function toggleLayer(el) {
+  el.classList.toggle('on');
+}
+
+function toggleLayerPanel() {
+  const p = document.getElementById('layer-panel');
+  p.style.display = p.style.display === 'none' ? '' : 'none';
+}
+
+function toggleDomain(el, domain) {
+  el.classList.toggle('enabled');
+}
+
+function selectCOA(card) {
+  document.querySelectorAll('.coa-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+}
+
+let aarInterval = null;
+let aarPos = 35;
+function togglePlayback(btn) {
+  aarPlaying = !aarPlaying;
+  if (aarPlaying) {
+    btn.classList.add('active');
+    btn.textContent = '⏸';
+    aarInterval = setInterval(() => {
+      aarPos = (aarPos + 0.3) % 100;
+      document.getElementById('aar-progress').style.width = aarPos + '%';
+      document.getElementById('aar-head').style.left = (aarPos-1) + '%';
+      const days = Math.floor(aarPos * 0.45);
+      const hrs = Math.floor((aarPos * 0.45 - days) * 24);
+      document.getElementById('aar-time').textContent = `D+${days} / H+${String(hrs).padStart(2,'0')}:00`;
+      document.getElementById('sim-day').textContent = 'D+' + days;
+    }, 100);
+  } else {
+    btn.classList.remove('active');
+    btn.textContent = '▶';
+    clearInterval(aarInterval);
+  }
+}
+
+// Animate sim run counter
+let runCount = 0;
+setInterval(() => {
+  if (runCount < 1000) {
+    runCount = Math.min(1000, runCount + Math.floor(Math.random()*17)+3);
+    document.getElementById('sim-runs').textContent = runCount.toLocaleString();
+  }
+}, 50);
+
+// ══════════════════════════════════════════
+// START
+// ══════════════════════════════════════════
+window.addEventListener('load', init);
+window.addEventListener('resize', () => {
+  drawAttritionChart();
+  drawMunitionsChart();
+});
+</script>
+</body>
+</html>
